@@ -1,0 +1,112 @@
+name: "frontend workflow"
+
+permissions:
+    contents: write
+    pull-requests: write
+    id-token: write
+    issues: write
+
+on:
+  workflow_call:
+    inputs:
+      app-id:
+        description: "GitHub App ID used for downstream workflows (like semantic versioning), must have write permissions to the repo"
+        required: true
+        type: string
+      gitleaks-app-id:
+        description: "GitHub App ID used by gitleaks to authenticate with the GitHub API (must have read permissions to the repo and prs"
+        required: true
+        type: string
+      aws-region:
+        description: "AWS region for deployment"
+        required: true
+        type: string
+      frontend-s3-bucket:
+        description: "S3 bucket name for frontend deployment"
+        required: true
+        type: string
+      cloudfront-distribution-id:
+        description: "CloudFront distribution ID for cache invalidation"
+        required: true
+        type: string
+    secrets:
+      GH_ORG_PRIVATE_KEY:
+        description: "GitHub App private key matching the app-id inputs"
+        required: true
+      GH_ORG_GITLEAKS_PRIVATE_KEY:
+        description: "GitHub App private key matching the gitleaks-app-id input, used for gitleaks authentication"
+        required: true
+      LICENSE_KEY_GITLEAKS:
+        description: "Gitleaks license key"
+        required: true
+      SONAR_TOKEN:
+        description: "SonarQube authentication token"
+        required: true
+      AWS_OIDC_ROLE_ARN:
+        description: "OIDC role ARN for AWS credentials"
+        required: true
+      AWS_DEPLOYMENT_ROLE_ARN:
+        description: "Deployment role ARN for AWS credentials"
+        required: true
+
+jobs:
+  check-single-commit:
+    name: '.'
+    uses: ./.github/workflows/check_single_commit.yml
+
+  gitleaks:
+    name: '.'
+    uses: ./.github/workflows/gitleaks.yml
+    needs: check-single-commit
+    secrets:
+      GH_ORG_GITLEAKS_PRIVATE_KEY: ${{ secrets.GH_ORG_GITLEAKS_PRIVATE_KEY }}
+      LICENSE_KEY_GITLEAKS: ${{ secrets.LICENSE_KEY_GITLEAKS }}
+    with:
+      gitleaks-app-id: ${{ inputs.gitleaks-app-id }}
+
+  vulnerability-scan:
+    name: '.'
+    uses: ./.github/workflows/vulnrability_scan.yml
+    needs: [ check-single-commit ]
+
+  unit-test-sonarqube:
+    name: '.'
+    uses: ./.github/workflows/frontend_unit_test_sonarqube.yml
+    needs: [ vulnerability-scan, gitleaks ]
+    secrets:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  semantic-release:
+    name: '.'
+    if: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') }}
+    uses: ./.github/workflows/semantic_release.yml
+    needs: [unit-test-sonarqube, vulnerability-scan]
+    secrets:
+      GH_ORG_PRIVATE_KEY: ${{ secrets.GH_ORG_PRIVATE_KEY }}
+    with:
+      app-id: ${{ inputs.app-id }}
+
+  build-and-push:
+    name: '.'
+    if: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') }}
+    uses: ./.github/workflows/frontend_build_deploy_s3.yml
+    needs: [semantic-release ]
+    secrets:
+      AWS_OIDC_ROLE_ARN: ${{ secrets.AWS_OIDC_ROLE_ARN }}
+      AWS_DEPLOYMENT_ROLE_ARN: ${{ secrets.AWS_DEPLOYMENT_ROLE_ARN }}
+    with:
+      version: ${{ needs.semantic-release.outputs.version }}
+      environment: ${{ github.ref == 'refs/heads/develop' && 'develop' || 'integration' }}
+      aws-region: ${{ inputs.aws-region }}
+      frontend-s3-bucket: ${{ inputs.frontend-s3-bucket }}
+      cloudfront-distribution-id: ${{ inputs.cloudfront-distribution-id }}
+
+  merge-main-develop:
+    name: '.'
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    uses: ./.github/workflows/merge_main_develop.yml
+    needs: [ semantic-release ]
+    secrets:
+      GH_ORG_PRIVATE_KEY: ${{ secrets.GH_ORG_PRIVATE_KEY }}
+    with:
+      app-id: ${{ inputs.app-id }}

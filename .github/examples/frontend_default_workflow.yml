@@ -1,0 +1,47 @@
+name: "default workflow"
+
+permissions:
+  contents: write
+  pull-requests: write
+  id-token: write
+  issues: write
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main, develop]
+  merge_group:
+    branches: [main, develop]
+jobs:
+  resolve-env:
+    runs-on: ubuntu-latest
+    environment: ${{ github.ref == 'refs/heads/develop' && 'develop' || 'integration' }}
+    outputs:
+      frontend_s3_bucket: ${{ steps.out.outputs.frontend_s3_bucket }}
+      cloudfront_distribution_id: ${{ steps.out.outputs.cloudfront_distribution_id }}
+      aws_region: ${{ steps.out.outputs.aws_region }}
+    steps:
+      - id: out
+        run: |
+          echo "resolving environment specific variables for environment $environment setting outputs for frontend_s3_bucket to ${{ vars.FRONTEND_S3_BUCKET }}"
+          echo "frontend_s3_bucket=${{ vars.FRONTEND_S3_BUCKET }}" >> "$GITHUB_OUTPUT"
+          echo "cloudfront_distribution_id=${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}" >> "$GITHUB_OUTPUT"
+
+  frontend-workflow:
+    name: '.'
+    uses: ./.github/workflows/frontend_workflow.yml
+    needs: resolve-env
+    secrets:
+      GH_ORG_PRIVATE_KEY: ${{ secrets.GH_ORG_PRIVATE_KEY }}
+      GH_ORG_GITLEAKS_PRIVATE_KEY: ${{ secrets.GH_ORG_GITLEAKS_PRIVATE_KEY }}
+      LICENSE_KEY_GITLEAKS: ${{ secrets.LICENSE_KEY_GITLEAKS }}
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      AWS_OIDC_ROLE_ARN: ${{ secrets.AWS_OIDC_ROLE_ARN }}
+      AWS_DEPLOYMENT_ROLE_ARN: ${{ secrets.AWS_DEPLOYMENT_ROLE_ARN }}
+    with:
+      app-id: ${{ vars.GH_ORG_APP_ID }}
+      gitleaks-app-id: ${{ vars.GH_ORG_GITLEAKS_APP_ID }}
+      aws-region: ${{ vars.AWS_REGION }}
+      frontend-s3-bucket: ${{ needs.resolve-env.outputs.frontend_s3_bucket }}
+      cloudfront-distribution-id: ${{ needs.resolve-env.outputs.cloudfront_distribution_id }}

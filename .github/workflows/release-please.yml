@@ -1,0 +1,69 @@
+on:
+  workflow_call:
+    inputs:
+      release-type:
+        description: "Release Please release type (node, java, go, python, etc.)"
+        required: false
+        type: string
+        default: node
+      target-branch:
+        description: "Branch to open release PRs against (usually main)"
+        required: false
+        type: string
+        default: main
+      config-file:
+        description: "Optional Release Please config file path"
+        required: false
+        type: string
+        default: ""
+      manifest-file:
+        description: "Optional Release Please manifest file path"
+        required: false
+        type: string
+        default: ""
+      app-id:
+        description: "GitHub App ID used to create the release token"
+        required: true
+        type: string
+    secrets:
+        GH_ORG_PRIVATE_KEY:
+          description: "GitHub App private key used to create the release token"
+          required: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/create-github-app-token@v2
+        id: app-token
+        env:
+          GH_ORG_APP_ID: ${{ inputs.app-id }}
+          GH_ORG_PRIVATE_KEY: ${{ secrets.GH_ORG_PRIVATE_KEY }}
+        with:
+          app-id: ${{ env.GH_ORG_APP_ID }}
+          private-key: ${{ env.GH_ORG_PRIVATE_KEY }}
+
+      - name: Release Please
+        id: rp
+        uses: googleapis/release-please-action@v4
+        with:
+          # Use provided token if present, otherwise default to GITHUB_TOKEN
+          token: ${{ steps.app-token.outputs.token }}
+          release-type: ${{ inputs.release-type }}
+          target-branch: ${{ inputs.target-branch }}
+
+          # Only pass these when set (empty string is fine; action ignores missing files if not used)
+          config-file: ${{ inputs.config-file }}
+          manifest-file: ${{ inputs.manifest-file }}
+
+      - name: Output summary
+        if: ${{ always() }}
+        run: |
+          echo "release_created=${{ steps.rp.outputs.release_created }}"
+          echo "pr_created=${{ steps.rp.outputs.pr_created }}"
+          echo "tag_name=${{ steps.rp.outputs.tag_name }}"

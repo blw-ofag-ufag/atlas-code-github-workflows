@@ -1,0 +1,69 @@
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+on:
+  workflow_call:
+    inputs:
+      app-id:
+        description: "GitHub App ID used to create the release token"
+        required: true
+        type: string
+    secrets:
+      GH_ORG_PRIVATE_KEY:
+        description: "GitHub App private key used to create the release token"
+        required: true
+    outputs:
+      version:
+        description: "The version released by semantic-release"
+        value: ${{ jobs.semantic-release.outputs.version }}
+jobs:
+  semantic-release:
+    name: Semantic Release
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      version: ${{ steps.semantic-release.outputs.version }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - uses: actions/create-github-app-token@v2
+        id: app-token
+        env:
+          GH_ORG_APP_ID: ${{ inputs.app-id }}
+          GH_ORG_PRIVATE_KEY: ${{ secrets.GH_ORG_PRIVATE_KEY }}
+        with:
+          app-id: ${{ env.GH_ORG_APP_ID }}
+          private-key: ${{ env.GH_ORG_PRIVATE_KEY }}
+
+      - name: Semantic Release
+        id: semantic-release
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          pnpm dlx \
+            --package=semantic-release@25.0.3 \
+            --package=@semantic-release/git@^10.0.1 \
+            --package=@semantic-release/changelog@6.0.3 \
+            --package=@semantic-release/github@12.0.6 \
+            --package=@semantic-release/exec@7.1.0 \
+            --package=@semantic-release/commit-analyzer@13.0.1 \
+            --package=@semantic-release/release-notes-generator@14.1.0 \
+            --package=conventional-changelog-conventionalcommits@9.2.0 \
+            semantic-release
