@@ -1,0 +1,131 @@
+name: Frontend Build and Deploy to S3 and invalidate CloudFront Cache
+run-name: Build and Deploy - ${{ inputs.environment }} - ${{ inputs.version }}
+on:
+  workflow_call:
+    inputs:
+      version:
+        required: true
+        type: string
+        description: "Version of the application being deployed, used for versioned S3 paths and cache invalidation"
+      environment:
+        type: string
+        required: true
+        description: "environment to deploy to, used for selecting correct AWS credentials and CloudFront distribution based on environment specific secrets and variables"
+      aws-region:
+        type: string
+        required: true
+        description: "AWS region for deployment and AWS CLI commands"
+      frontend-s3-bucket:
+        type: string
+        required: true
+        description: "S3 bucket name for frontend deployment"
+      cloudfront-distribution-id:
+        type: string
+        required: true
+        description: "CloudFront distribution ID for cache invalidation"
+      build-configuration:
+        type: string
+        required: false
+        default: "dev"
+        description: "Build configuration for the frontend application, e.g. dev, prod, int, used to adjust build settings and select correct environment specific variables if needed"
+    secrets:
+      AWS_OIDC_ROLE_ARN:
+        description: "OIDC role ARN for AWS credentials"
+        required: true
+      AWS_DEPLOYMENT_ROLE_ARN:
+        description: "Deployment role ARN for AWS credentials"
+        required: true
+
+jobs:
+  # todo push to versioned s3 path / dont invalidate cache / instead create PR on Infrastructure repo to update origin path or copy the directory
+  build-push-s3:
+    name: Build and push application to S3 bucket
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    timeout-minutes: 5
+    env:
+      AWS_REGION: ${{ inputs.aws-region }}
+      FRONTEND_S3_BUCKET: ${{ inputs.frontend-s3-bucket }}
+      CLOUDFRONT_DISTRIBUTION_ID: ${{ inputs.cloudfront-distribution-id }}
+
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Print GitHub Context Safely
+        run: |
+          echo "--- GitHub Context ---"
+          echo "${GITHUB_REPOSITORY}"
+          echo "${GITHUB_REF}"
+          echo "${GITHUB_SHA}"
+
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ format('v{0}', inputs.version) }}
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v5
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: pnpm install
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Build
+        # todo maybe adjust with env specific config eg: pnpm build -- --configuration=${{ steps.resolve-inputs.outputs.configuration }}
+        run: pnpm build
+
+      - name: Validate deployment inputs  -- --configuration=${{ inputs.build-configuration }}
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+
+          [[ "$VERSION" =~ ^[0-9]+(\.[0-9]+){2}([.-][0-9A-Za-z]+)*$ ]] || { echo "Invalid version"; exit 1; }
+          [[ "$AWS_REGION" =~ ^[a-z]{2}-[a-z]+-[0-9]+$ ]] || { echo "Invalid AWS region"; exit 1; }
+          [[ "$FRONTEND_S3_BUCKET" =~ ^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$ ]] || { echo "Invalid S3 bucket"; exit 1; }
+          [[ "$CLOUDFRONT_DISTRIBUTION_ID" =~ ^[A-Z0-9]{10,32}$ ]] || { echo "Invalid CloudFront distribution ID"; exit 1; }
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ secrets.AWS_OIDC_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Assume deployment role
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOYMENT_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+          role-chaining: true
+          role-skip-session-tagging: true
+
+      - name: Deploy to S3 bucket
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+
+          echo "Deploying version: v${VERSION}"
+
+          aws s3 sync "dist/" "s3://${FRONTEND_S3_BUCKET}/" \
+            --region "$AWS_REGION" \
+            --delete
+
+      - name: Invalidate CloudFront cache
+        run: |
+          echo "Creating CloudFront invalidation for distribution: ${CLOUDFRONT_DISTRIBUTION_ID}"
+          aws cloudfront create-invalidation \
+            --distribution-id "$CLOUDFRONT_DISTRIBUTION_ID" \
+            --paths "/*"
+
+      - name: Display deployment URL
+        run: |
+          echo "✅ Deployment complete!"
+          echo "🌐 Your application is available at: https://www.blw-agate-dev.pc-core.isceco.admin.ch"

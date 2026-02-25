@@ -1,0 +1,31 @@
+name: "Trivy fs scan: checks for vulnerabilities in dependencies and checks for credential leaks (e.g. accidentally committed secrets)"
+run-name: "Trivy scan"
+on:
+  workflow_call:
+
+jobs:
+  trivy-image-scan:
+    name: Trivy Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Run Trivy image scan
+        uses: aquasecurity/trivy-action@v0.35.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          format: table
+          exit-code: 1
+#     # todo upload SARIF to GitHub Security (probably needs advanced security activated on github repo, but costs a lot if repo is private, probably free once it is public), note also needs format to be sarif and not table
+#      - name: Upload SARIF to GitHub Security
+#        if: always()
+#        uses: github/codeql-action/upload-sarif@v3
+#        with:
+#          sarif_file: trivy-results.sarif

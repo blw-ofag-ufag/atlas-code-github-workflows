@@ -1,0 +1,45 @@
+name: "Gitleaks Scan: checks for secrets in the codebase and pull requests using gitleaks, authenticated with a GitHub App to be able to comment on PRs with findings"
+run-name: "Gitleaks"
+on:
+  workflow_call:
+    inputs:
+      gitleaks-app-id:
+        description: "GitHub App ID used by gitleaks to authenticate with the GitHub API (must have read permissions to the repo and prs)"
+        required: true
+        type: string
+    secrets:
+      GH_ORG_GITLEAKS_PRIVATE_KEY:
+        description: "GitHub App private key used for the gitleaks-app-id"
+        required: true
+      LICENSE_KEY_GITLEAKS:
+        description: "Gitleaks license key"
+        required: true
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  git-leaks:
+    name: Gitleaks
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          clean: true
+
+      - uses: actions/create-github-app-token@v3
+        id: app-token
+        with:
+          app-id: ${{ inputs.gitleaks-app-id }}
+          private-key: ${{ secrets.GH_ORG_GITLEAKS_PRIVATE_KEY }}
+
+      - name: Run Gitleaks Scan
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+          GITLEAKS_LICENSE: ${{ secrets.LICENSE_KEY_GITLEAKS }}

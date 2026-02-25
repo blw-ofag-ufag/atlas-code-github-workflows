@@ -1,0 +1,60 @@
+name: "Merge main into develop"
+run-name: Merge main into develop"
+on:
+  workflow_call:
+    inputs:
+      app-id:
+        description: "GitHub App ID used to create merge commit , must have write permissions to the repo"
+        required: true
+        type: string
+    secrets:
+      SEMVER_PRIVATE_KEY:
+        description: "GitHub App private key of the app specified in app-id, used to create the merge token"
+        required: true
+
+jobs:
+  merge-main-develop:
+    name: Merge main into develop
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/create-github-app-token@v3
+        id: app-token
+        with:
+          app-id: ${{ inputs.app-id }}
+          private-key: ${{ secrets.SEMVER_PRIVATE_KEY }}
+
+      - name: Set up Git user for GitHub App
+        run: |
+          git config --global user.name "semantic-release[bot]"
+          git config --global user.email "semantic-release[bot]@users.noreply.github.com"
+
+      - name: Sync main to develop
+        env:
+          # todo remove Fallback to GITHUB_TOKEN if app token is available
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          set -e
+
+          echo "🔄 Cloning repository..."
+          git clone https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }} repo
+          cd repo
+
+          echo "📦 Setting up remotes..."
+          git remote add app-origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}
+          git fetch app-origin
+
+          echo "🔀 Checking out 'develop' branch..."
+          git checkout develop
+
+          echo "🔁 Attempting fast-forward merge from 'main' to 'develop'..."
+          git merge --ff-only app-origin/main || echo "⚠️ Fast-forward not possible, continuing..."
+
+          echo "📊 Checking for changes after merge..."
+          if git diff --quiet app-origin/develop; then
+            echo "✅ No changes to push. Skipping push."
+            exit 0
+          fi
+
+          echo "🚀 Pushing changes to 'develop'..."
+          git push app-origin develop
