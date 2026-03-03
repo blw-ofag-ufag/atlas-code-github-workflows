@@ -23,7 +23,7 @@ jobs:
       gitleaks-app-id: ${{ vars.GH_ORG_GITLEAKS_APP_ID }}
 
   release:
-    if: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/main') }}
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     uses: ./.github/workflows/release-please.yml
     with:
       release-type: simple
