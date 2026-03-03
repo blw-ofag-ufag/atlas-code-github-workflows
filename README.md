@@ -55,7 +55,7 @@ repository settings.
 
 ## 🎨 Frontend Workflow
 To set up the frontend workflow, 
-1. copy `examples\frontend_default_workflow.yml` to your repo under`.github/workflows/default_workflow.yml` and adjust it to your needs.
+1. copy `examples\frontend_trigger_default_workflow.yml` to your repo under`.github/workflows/trigger_default_workflow.yml` and adjust it to your needs.
 2. copy `fontend.releaserc.json` to your repo under `.releaserc.json` and adjust it to your needs.
 ### 🗂️ Frontend Repository Configuration
 
