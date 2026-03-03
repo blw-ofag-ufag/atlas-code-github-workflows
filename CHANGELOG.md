@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/blw-ofag-ufag/atlas-ci-workflows/compare/v1.1.0...v1.2.0) (2026-03-03)
+
+
+### Features
+
+* **init:** adds needs gitleaks before release please ([#4](https://github.com/blw-ofag-ufag/atlas-ci-workflows/issues/4)) ([0920090](https://github.com/blw-ofag-ufag/atlas-ci-workflows/commit/09200908779ae7776539ef2f9700970a7ddd00cf))
+
 ## [1.1.0](https://github.com/blw-ofag-ufag/atlas-ci-workflows/compare/v1.0.0...v1.1.0) (2026-03-03)
 
 
