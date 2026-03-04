@@ -1,10 +1,10 @@
 name: "frontend workflow"
 
 permissions:
-    contents: write
-    pull-requests: write
-    id-token: write
-    issues: write
+  contents: write
+  pull-requests: write
+  id-token: write
+  issues: write
 
 on:
   workflow_call:
@@ -27,6 +27,10 @@ on:
         type: string
       cloudfront-distribution-id:
         description: "CloudFront distribution ID for cache invalidation"
+        required: true
+        type: string
+      environment:
+        description: "Deployment environment used to resolve secrets (e.g., dev, int)"
         required: true
         type: string
     secrets:
@@ -80,7 +84,7 @@ jobs:
     name: '.'
     if: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') }}
     uses: ./.github/workflows/semantic_release.yml
-    needs: [unit-test-sonarqube, vulnerability-scan]
+    needs: [ unit-test-sonarqube, vulnerability-scan ]
     secrets:
       GH_ORG_PRIVATE_KEY: ${{ secrets.GH_ORG_PRIVATE_KEY }}
     with:
@@ -90,13 +94,13 @@ jobs:
     name: '.'
     if: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') }}
     uses: ./.github/workflows/frontend_build_deploy_s3.yml
-    needs: [semantic-release ]
+    needs: [ semantic-release ]
     secrets:
       AWS_OIDC_ROLE_ARN: ${{ secrets.AWS_OIDC_ROLE_ARN }}
       AWS_DEPLOYMENT_ROLE_ARN: ${{ secrets.AWS_DEPLOYMENT_ROLE_ARN }}
     with:
-      version: ${{ needs.semantic-release.outputs.version }}
-      environment: ${{ github.ref == 'refs/heads/develop' && 'dev' || 'int' }}
+      environment: ${{ inputs.environment }}
+      version: 1.4.0-rc.16
       aws-region: ${{ inputs.aws-region }}
       frontend-s3-bucket: ${{ inputs.frontend-s3-bucket }}
       cloudfront-distribution-id: ${{ inputs.cloudfront-distribution-id }}
