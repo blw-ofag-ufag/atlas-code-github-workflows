@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/compare/v1.3.0...v1.4.0) (2026-03-04)
+
+
+### Features
+
+* **env:** adds ability to specify the env on root frontend workflow ([3d3e1ab](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/commit/3d3e1ab7f8f2c2d1f2a01cd7fb83bbd0c5650f8f))
+
 ## [1.3.0](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/compare/v1.2.0...v1.3.0) (2026-03-04)
 
 
