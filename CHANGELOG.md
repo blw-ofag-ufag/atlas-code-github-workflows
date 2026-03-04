@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/compare/v1.2.0...v1.3.0) (2026-03-04)
+
+
+### Features
+
+* **env:** adapts env vars to naming conventions ([7017501](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/commit/7017501ccd2db0dcd7c34c638fc0b8dee10ff875))
+
 ## [1.2.0](https://github.com/blw-ofag-ufag/atlas-ci-workflows/compare/v1.1.0...v1.2.0) (2026-03-03)
 
 
