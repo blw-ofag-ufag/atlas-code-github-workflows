@@ -10,14 +10,14 @@ This repository contains reusable GitHub Actions workflows for CI/CD pipelines. 
 
 ### 🌍 Available Environments
 
-- `develop`
-- `integration`
-- `production`
+- `dev`
+- `int`
+- `prod`
 
 ---
 
 ### 🔧 Installation
-1. For deployment pipeline make sure the Github App: GH-ORG-APP-TOKEN-READ-WRITE is installed in your repository and the required org secrets are configured (see below).
+1. For deployment pipelines make sure the Github App: GH-ORG-APP-TOKEN-READ-WRITE is installed in your repository and the required org secrets are configured (see below).
 2. For Gitleaks make sure that the Github App: GH-ORG-GITLEAKS is installed in your repository and the required org secrets are configured (see below).
 3. Install one of the workflows as described below and adjust it to your needs.
 

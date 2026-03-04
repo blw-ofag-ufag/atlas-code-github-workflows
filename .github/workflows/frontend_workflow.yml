@@ -96,7 +96,7 @@ jobs:
       AWS_DEPLOYMENT_ROLE_ARN: ${{ secrets.AWS_DEPLOYMENT_ROLE_ARN }}
     with:
       version: ${{ needs.semantic-release.outputs.version }}
-      environment: ${{ github.ref == 'refs/heads/develop' && 'develop' || 'integration' }}
+      environment: ${{ github.ref == 'refs/heads/develop' && 'dev' || 'int' }}
       aws-region: ${{ inputs.aws-region }}
       frontend-s3-bucket: ${{ inputs.frontend-s3-bucket }}
       cloudfront-distribution-id: ${{ inputs.cloudfront-distribution-id }}
