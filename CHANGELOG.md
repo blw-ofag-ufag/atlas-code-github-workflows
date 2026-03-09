@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.1](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/compare/v1.4.0...v1.4.1) (2026-03-09)
+
+
+### Bug Fixes
+
+* **semantic_versioning:** removes fixed version ([63b6bcc](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/commit/63b6bccbf517771a231e89d35877274778d5570c))
+
 ## [1.4.0](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/compare/v1.3.0...v1.4.0) (2026-03-04)
 
 
