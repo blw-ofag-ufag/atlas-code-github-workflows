@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.0](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/compare/v1.4.1...v1.5.0) (2026-03-16)
+
+
+### Features
+
+* **frontend-deployment:** adds ability to set angular environment before building ([38b8364](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/commit/38b8364fa5080e6e42c1d44bffb2fb852aab85ce))
+
 ## [1.4.1](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/compare/v1.4.0...v1.4.1) (2026-03-09)
 
 
