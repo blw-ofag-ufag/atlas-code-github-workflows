@@ -21,6 +21,11 @@ on:
         type: string
         required: true
         description: "CloudFront distribution ID for cache invalidation"
+      build-configuration:
+        type: string
+        required: false
+        default: "dev"
+        description: "Build configuration for the frontend application, e.g. dev, prod, int, used to adjust build settings and select correct environment specific variables if needed"
     secrets:
       AWS_OIDC_ROLE_ARN:
         description: "OIDC role ARN for AWS credentials"
@@ -74,7 +79,7 @@ jobs:
         # todo maybe adjust with env specific config eg: pnpm build -- --configuration=${{ steps.resolve-inputs.outputs.configuration }}
         run: pnpm build
 
-      - name: Validate deployment inputs
+      - name: Validate deployment inputs  -- --configuration=${{ inputs.build-configuration }}
         env:
           VERSION: ${{ inputs.version }}
         run: |
@@ -107,7 +112,7 @@ jobs:
 
           echo "Deploying version: v${VERSION}"
 
-          aws s3 sync "dist/atlas-agate-frontend/browser/" "s3://${FRONTEND_S3_BUCKET}/" \
+          aws s3 sync "dist/" "s3://${FRONTEND_S3_BUCKET}/" \
             --region "$AWS_REGION" \
             --delete
 
