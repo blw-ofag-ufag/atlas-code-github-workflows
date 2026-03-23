@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.1](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/compare/v1.5.0...v1.5.1) (2026-03-23)
+
+
+### Bug Fixes
+
+* **trivy:** fixes trivy supply chain attack ([#10](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/issues/10)) ([bee3f6f](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/commit/bee3f6fa9f0567e9056cc66e4cfece0072becec2))
+
 ## [1.5.0](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/compare/v1.4.1...v1.5.0) (2026-03-16)
 
 
