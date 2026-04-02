@@ -1,3 +1,5 @@
+name: Frontend Build and Deploy to S3 and invalidate CloudFront Cache
+run-name: Build and Deploy - ${{ inputs.environment }} - ${{ inputs.version }}
 on:
   workflow_call:
     inputs:
@@ -91,13 +93,13 @@ jobs:
           [[ "$CLOUDFRONT_DISTRIBUTION_ID" =~ ^[A-Z0-9]{10,32}$ ]] || { echo "Invalid CloudFront distribution ID"; exit 1; }
 
       - name: Configure AWS credentials (OIDC)
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ secrets.AWS_OIDC_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Assume deployment role
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ secrets.AWS_DEPLOYMENT_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}

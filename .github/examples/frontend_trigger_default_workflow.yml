@@ -55,7 +55,7 @@ jobs:
     uses: blw-ofag-ufag/atlas-code-github-workflows/.github/workflows/frontend_workflow.yml@v1.4.0
     needs: [set-env, resolve-env-vars]
     secrets:
-      GH_ORG_PRIVATE_KEY: ${{ secrets.GH_ORG_PRIVATE_KEY }}
+      SEMVER_PRIVATE_KEY: ${{ secrets.SEMVER_PRIVATE_KEY }}
       GH_ORG_GITLEAKS_PRIVATE_KEY: ${{ secrets.GH_ORG_GITLEAKS_PRIVATE_KEY }}
       LICENSE_KEY_GITLEAKS: ${{ secrets.LICENSE_KEY_GITLEAKS }}
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

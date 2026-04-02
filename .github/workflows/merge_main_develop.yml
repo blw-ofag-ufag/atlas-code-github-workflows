@@ -1,3 +1,5 @@
+name: "Merge main into develop"
+run-name: Merge main into develop"
 on:
   workflow_call:
     inputs:
@@ -6,7 +8,7 @@ on:
         required: true
         type: string
     secrets:
-      GH_ORG_PRIVATE_KEY:
+      SEMVER_PRIVATE_KEY:
         description: "GitHub App private key of the app specified in app-id, used to create the merge token"
         required: true
 
@@ -16,11 +18,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/create-github-app-token@v2
+      - uses: actions/create-github-app-token@v3
         id: app-token
         with:
           app-id: ${{ inputs.app-id }}
-          private-key: ${{ secrets.GH_ORG_PRIVATE_KEY }}
+          private-key: ${{ secrets.SEMVER_PRIVATE_KEY }}
 
       - name: Set up Git user for GitHub App
         run: |

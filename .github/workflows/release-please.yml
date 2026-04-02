@@ -1,3 +1,5 @@
+name: "Release Please: alternative to sematic release that creates PRs instead of directly releasing, allowing for manual review and merge"
+run-name: "Release Please"
 on:
   workflow_call:
     inputs:
@@ -39,7 +41,7 @@ jobs:
   release-please:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/create-github-app-token@v2
+      - uses: actions/create-github-app-token@v3
         id: app-token
         env:
           GH_ORG_APP_ID: ${{ inputs.app-id }}

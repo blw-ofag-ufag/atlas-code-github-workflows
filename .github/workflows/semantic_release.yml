@@ -1,3 +1,5 @@
+name: "Semantic Release: creates releases based on commit messages, allowing for fully automated releases without manual intervention, but requires careful commit message formatting to work correctly"
+run-name: "Semantic Release"
 permissions:
   contents: write
   issues: write
@@ -11,7 +13,7 @@ on:
         required: true
         type: string
     secrets:
-      GH_ORG_PRIVATE_KEY:
+      SEMVER_PRIVATE_KEY:
         description: "GitHub App private key used to create the release token"
         required: true
     outputs:
@@ -43,7 +45,10 @@ jobs:
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
 
-      - uses: actions/create-github-app-token@v2
+      - name: pnpm install
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - uses: actions/create-github-app-token@v3
         id: app-token
         env:
           GH_ORG_APP_ID: ${{ inputs.app-id }}
@@ -57,13 +62,18 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
-          pnpm dlx \
-            --package=semantic-release@25.0.3 \
-            --package=@semantic-release/git@^10.0.1 \
-            --package=@semantic-release/changelog@6.0.3 \
-            --package=@semantic-release/github@12.0.6 \
-            --package=@semantic-release/exec@7.1.0 \
-            --package=@semantic-release/commit-analyzer@13.0.1 \
-            --package=@semantic-release/release-notes-generator@14.1.0 \
-            --package=conventional-changelog-conventionalcommits@9.2.0 \
-            semantic-release
+          pnpm semantic-release
+
+# Alternative that does not require a package.json script for semantic-release, but is less efficient since it has to install the packages every time instead of using a cached version from node_modules
+# Also there was an issue with a transitive dependency of semantic-release that caused the release to fail, using package.json we can override the version of that dependency to fix the issue, but with pnpm dlx we would have to wait for a new release of semantic-release that updates the dependency
+#        run: |
+#          pnpm dlx \
+#            --package=semantic-release@25.0.3 \
+#            --package=@semantic-release/git@10.0.1 \
+#            --package=@semantic-release/changelog@6.0.3 \
+#            --package=@semantic-release/github@12.0.6 \
+#            --package=@semantic-release/exec@7.1.0 \
+#            --package=@semantic-release/commit-analyzer@13.0.1 \
+#            --package=@semantic-release/release-notes-generator@14.1.0 \
+#            --package=conventional-changelog-conventionalcommits@9.2.0 \
+#            semantic-release

@@ -1,3 +1,5 @@
+name: Check Single Commit, fails if a PR contains more than one commit to encourage squashing commits before merging.
+run-name: Check Single Commit
 on:
   workflow_call:
 
