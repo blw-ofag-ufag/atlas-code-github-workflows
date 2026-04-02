@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.0](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/compare/v1.5.1...v1.6.0) (2026-04-02)
+
+
+### Features
+
+* **backend-workflow:** adds backend workflow ([#12](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/issues/12)) ([40f2111](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/commit/40f211169dff611408a113dd5e789a6c43074a0e))
+
 ## [1.5.1](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/compare/v1.5.0...v1.5.1) (2026-03-23)
 
 
