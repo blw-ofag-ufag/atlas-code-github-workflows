@@ -1,4 +1,5 @@
-name: Release atlas code workflows
+name: "Release atlas code workflows - used by this repository"
+run-name: "Release atlas code workflows"
 permissions:
   contents: write
   pull-requests: write

@@ -1,3 +1,5 @@
+name: "Gitleaks Scan: checks for secrets in the codebase and pull requests using gitleaks, authenticated with a GitHub App to be able to comment on PRs with findings"
+run-name: "Gitleaks"
 on:
   workflow_call:
     inputs:
@@ -30,7 +32,7 @@ jobs:
           fetch-depth: 0
           clean: true
 
-      - uses: actions/create-github-app-token@v2
+      - uses: actions/create-github-app-token@v3
         id: app-token
         with:
           app-id: ${{ inputs.gitleaks-app-id }}

@@ -1,3 +1,5 @@
+name: Unit Tests and SonarQube
+run-name: Unit Tests and SonarQube
 on:
   workflow_call:
     secrets:

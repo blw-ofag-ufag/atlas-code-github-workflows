@@ -17,6 +17,7 @@ This repository contains reusable GitHub Actions workflows for CI/CD pipelines. 
 ---
 
 ### 🔧 Installation
+
 1. For deployment pipelines make sure the Github App: GH-ORG-APP-TOKEN-READ-WRITE is installed in your repository and the required org secrets are configured (see below).
 2. For Gitleaks make sure that the Github App: GH-ORG-GITLEAKS is installed in your repository and the required org secrets are configured (see below).
 3. Install one of the workflows as described below and adjust it to your needs.
@@ -54,12 +55,24 @@ repository settings.
 ---
 
 ## 🎨 Frontend Workflow
-To set up the frontend workflow, 
+
+To set up the frontend workflow,
+
 1. copy `examples\frontend_trigger_default_workflow.yml` to your repo under`.github/workflows/trigger_default_workflow.yml` and adjust it to your needs.
 2. copy `fontend.releaserc.json` to your repo under `.releaserc.json` and adjust it to your needs.
+
 ### 🗂️ Frontend Repository Configuration
 
-Add the following variables and secrets to your GitHub repository settings:
+#### Github App for Semantic Versioning
+
+Create a Github App: named after your repository and semver postfix (e.g. ATLAS-AGATE-FRONTEND-SEMVER) with the following permissions:
+
+- Repository permissions:
+    - Actions Read & Write
+    - Contents: Read & Write
+    - Issues Read and Write
+    - Metadata: Read-only
+- Install the app in your repository and add app id and private key to the repository secrets and variables as described below.
 
 #### 📦 Repository Variables
 
@@ -77,7 +90,10 @@ Add the following variables and secrets to your GitHub repository settings:
 
 ### 🔬 SonarQube Configuration
 
-To configure SonarQube, add the following file to the root of your repository and fill in the correct values:
+1. Add your github repository to the BLW SonarQube app: https://github.com/organizations/blw-ofag-ufag/settings/installations/105700821
+2. Create a new Project in [BLW SonarQube](https://sonarcloud.io/organizations/bundesamt-fur-landwirtschaft-blw/projects)
+3. In SonarCloud select the new project then "administration" → "analysis method" and deselect "Automatic Analysis"
+4. Configure SonarQube, by adding the following file to the root of your repository and fill in the correct values:
 
 **File:** `sonar-project.properties`
 
@@ -91,4 +107,72 @@ sonar.javascript.lcov.reportPaths=coverage/lcov.info
 sonar.sourceEncoding=UTF-8
 ```
 
+## Backend Workflow
 
+Create a Github App for Semver: named after your repository and semver postfix (e.g. ATLAS-AGATE-BACKEND-SEMVER) with the following permissions:
+
+- Repository permissions:
+    - Actions Read & Write
+    - Contents: Read & Write
+    - Issues Read and Write
+    - Metadata: Read-only
+- Install the app in your repository and add app id and private key to the repository secrets and variables as described below.
+
+Make sure your backend repository has the following `GH Apps` installed:
+
+* Semver app eg: ATLAS-AGATE-TEST-BACKEND-SEMVER
+* GH-ORG-GITLEAKS 
+* Deployment app: PC-CORE-BLW-AGATE-DEV-DEPLOY
+* SonarQubeCloud
+
+Make sure the Repo has access to those `Organisation secrets`:
+
+* InfraRepo_DEPLOY_PRIVATE_KEY (e.g: PC_CORE_BLW_AGATE_DEV_DEPLOY_PRIVATE_KEY)
+* SONAR_TOKEN
+* NIST_OWASP_API_KEY
+* LICENSE_KEY_GITLEAKS
+* GH_ORG_GITLEAKS_PRIVATE_KEY
+
+And those `Organization variables`:
+* AWS_REGION
+* GH_ORG_GITLEAKS_APP_ID
+* InfraRepo_DEPLOY_APP_ID (e.g: PC_CORE_BLW_AGATE_DEV_DEPLOY_APP_ID)
+
+#### 📦 Repository Variables
+
+| Name            | Description                            |
+|-----------------|----------------------------------------|
+| `SEMVER_APP_ID` | GH App ID used for semantic versioning |
+
+#### 🔑 Repository Secrets
+
+| Name                 | Description                                                  |
+|----------------------|--------------------------------------------------------------|
+| `SEMVER_PRIVATE_KEY` | Private key of the GH App ID of used for semantic versioning |
+
+### 🔬 SonarQube Configuration
+
+1. Add your github repository to the BLW SonarQube app: https://github.com/organizations/blw-ofag-ufag/settings/installations/105700821
+2. Create a new Project in [BLW SonarQube](https://sonarcloud.io/organizations/bundesamt-fur-landwirtschaft-blw/projects)
+3. In SonarCloud select the new project then "administration" → "analysis method" and deselect "Automatic Analysis"
+4. Add sonar plugin to your pom.xml:
+
+```xml
+
+<dependency>
+    <groupId>org.sonarsource.scanner.maven</groupId>
+    <artifactId>sonar-maven-plugin</artifactId>
+    <version>${sonar-maven-plugin.version}</version>
+</dependency>
+```
+
+add project specific properties to your pom.xml:
+
+```xml        
+
+<properties>
+    <sonar-maven-plugin.version>5.5.0.6356</sonar-maven-plugin.version>
+    <sonar.organization>bundesamt-fur-landwirtschaft-blw</sonar.organization>
+    <sonar.projectKey>blw-ofag-ufag_atlas-agate-test-backend</sonar.projectKey>
+</properties>
+```

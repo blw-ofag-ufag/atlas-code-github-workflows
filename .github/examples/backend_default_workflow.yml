@@ -1,0 +1,58 @@
+name: "backend default workflow"
+
+permissions:
+  contents: write
+  pull-requests: write
+  id-token: write
+  issues: write
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+  push:
+    branches: [ main, develop ]
+  merge_group:
+    branches: [ main, develop ]
+jobs:
+  # maps the branch to an environment and sets it as output for the rest of the workflow
+  set-env:
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.map-branch-to-env.outputs.environment }}
+
+    steps:
+      - id: map-branch-to-env
+        shell: bash
+        run: |
+          if [[ "${GITHUB_REF}" == "refs/heads/develop" ]]; then
+            echo "environment=dev" >> "$GITHUB_OUTPUT"
+          elif [[ "${GITHUB_REF}" == "refs/heads/main" ]]; then
+            echo "environment=int" >> "$GITHUB_OUTPUT"
+          else
+            echo "unable to set environment for ref ${GITHUB_REF}"
+          fi
+
+
+  backend-workflow:
+    name: "."
+    uses: ./.github/workflows/backend_workflow.yml
+    needs: [ set-env ]
+    secrets:
+      GH_ORG_GITLEAKS_PRIVATE_KEY: ${{ secrets.GH_ORG_GITLEAKS_PRIVATE_KEY }}
+      LICENSE_KEY_GITLEAKS: ${{ secrets.LICENSE_KEY_GITLEAKS }}
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      AWS_OIDC_ROLE_ARN: ${{ secrets.AWS_OIDC_ROLE_ARN }}
+      AWS_DEPLOYMENT_ROLE_ARN: ${{ secrets.AWS_DEPLOYMENT_ROLE_ARN }}
+      SEMVER_PRIVATE_KEY: ${{secrets.SEMVER_PRIVATE_KEY}}
+      NIST_OWASP_API_KEY: ${{ secrets.NIST_OWASP_API_KEY }}
+      DEPLOYMENT_APP_PRIVATE_KEY: ${{ secrets.PC_CORE_BLW_AGATE_DEV_DEPLOY_PRIVATE_KEY }}
+    with:
+      environment: ${{ needs.set-env.outputs.environment }}
+      semver-app-id: ${{vars.SEMVER_APP_ID}}
+      gitleaks-app-id: ${{ vars.GH_ORG_GITLEAKS_APP_ID }}
+      aws-region: ${{ vars.AWS_REGION }}
+      ecr-repository-name: 'agate-test-backend'
+      deployment-app-id: ${{ vars.PC_CORE_BLW_AGATE_DEV_DEPLOY_APP_ID}}
+      application-name: 'agate-test-backend'
+      infrastructure_repo: 'pc-core-blw-agate-dev'
+      github-organization: 'blw-ofag-ufag'

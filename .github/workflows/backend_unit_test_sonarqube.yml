@@ -1,0 +1,48 @@
+name: Unit Tests and SonarQube analysis for Java backend
+run-name: Unit Tests and SonarQube
+on:
+  workflow_call:
+    secrets:
+      SONAR_TOKEN:
+        description: "SonarQube authentication token"
+        required: true
+jobs:
+  unit-test-sonarqube:
+    name: Unit Tests and SonarQube
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v5
+        with:
+          java-version: '25'
+          distribution: 'corretto'
+
+      - name: Restore Maven Cache
+        uses: actions/cache/restore@v5
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Run Unit Tests
+        run: mvn -B test -T 1C
+
+      - name: Run SonarQube Analysis
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          mvn -T 1C sonar:sonar -Dsonar.coverage.jacoco.xmlReportPaths=target/jacoco-report/jacoco.xml
+
+      - name: Save Maven Cache
+        uses: actions/cache/save@v5
+        if: success()
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}

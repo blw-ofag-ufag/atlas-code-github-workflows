@@ -1,5 +1,5 @@
-name: "frontend workflow"
-
+name: "frontend workflow that scans for secrets, vulnerabilities and code quality issues, creates a release and deploys to s3 (if the push was on main or develop)"
+run-name: "frontend workflow for environment: ${{ inputs.environment }}"
 permissions:
   contents: write
   pull-requests: write
@@ -34,7 +34,7 @@ on:
         required: true
         type: string
     secrets:
-      GH_ORG_PRIVATE_KEY:
+      SEMVER_PRIVATE_KEY:
         description: "GitHub App private key matching the app-id inputs"
         required: true
       GH_ORG_GITLEAKS_PRIVATE_KEY:
@@ -54,29 +54,27 @@ on:
         required: true
 
 jobs:
-  check-single-commit:
-    name: '.'
-    uses: ./.github/workflows/check_single_commit.yml
-
   gitleaks:
     name: '.'
     uses: ./.github/workflows/gitleaks.yml
-    needs: check-single-commit
     secrets:
       GH_ORG_GITLEAKS_PRIVATE_KEY: ${{ secrets.GH_ORG_GITLEAKS_PRIVATE_KEY }}
       LICENSE_KEY_GITLEAKS: ${{ secrets.LICENSE_KEY_GITLEAKS }}
     with:
       gitleaks-app-id: ${{ inputs.gitleaks-app-id }}
 
-  vulnerability-scan:
+  npm-audit:
     name: '.'
-    uses: ./.github/workflows/vulnrability_scan.yml
-    needs: [ check-single-commit ]
+    uses: ./.github/workflows/frontend_npm_audit.yml
+
+  trivy-scan:
+    name: "."
+    uses: ./.github/workflows/trivy_scan.yml
 
   unit-test-sonarqube:
     name: '.'
     uses: ./.github/workflows/frontend_unit_test_sonarqube.yml
-    needs: [ vulnerability-scan, gitleaks ]
+    needs: [ gitleaks, npm-audit, trivy-scan]
     secrets:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
@@ -84,9 +82,9 @@ jobs:
     name: '.'
     if: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') }}
     uses: ./.github/workflows/semantic_release.yml
-    needs: [ unit-test-sonarqube, vulnerability-scan ]
+    needs: [ unit-test-sonarqube, gitleaks, npm-audit, trivy-scan ]
     secrets:
-      GH_ORG_PRIVATE_KEY: ${{ secrets.GH_ORG_PRIVATE_KEY }}
+      SEMVER_PRIVATE_KEY: ${{ secrets.SEMVER_PRIVATE_KEY }}
     with:
       app-id: ${{ inputs.app-id }}
 
@@ -112,6 +110,6 @@ jobs:
     uses: ./.github/workflows/merge_main_develop.yml
     needs: [ semantic-release ]
     secrets:
-      GH_ORG_PRIVATE_KEY: ${{ secrets.GH_ORG_PRIVATE_KEY }}
+      SEMVER_PRIVATE_KEY: ${{ secrets.SEMVER_PRIVATE_KEY }}
     with:
       app-id: ${{ inputs.app-id }}
