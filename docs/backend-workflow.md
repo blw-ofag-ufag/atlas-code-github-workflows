@@ -70,6 +70,15 @@ The backend workflow (`backend_workflow.yml`) orchestrates the full CI/CD pipeli
 5. Add the following plugins to your `pom.xml`:
 
 ```xml
+<!-- the quarkus-jacoco dependency is only needed if you use quarkus -->
+<dependencies>
+    <!-- collects coverage data for @QuarkusTest and generates report -->
+    <dependency>
+        <groupId>io.quarkus</groupId>
+        <artifactId>quarkus-jacoco</artifactId>
+        <scope>test</scope>
+    </dependency>
+</dependencies>
 <plugins>
     <!-- Manages the SonarQube scanner version -->
     <plugin>
@@ -104,13 +113,14 @@ The backend workflow (`backend_workflow.yml`) orchestrates the full CI/CD pipeli
                     <goal>prepare-agent</goal>
                 </goals>
                 <configuration>
-                    <!-- Uncomment to exclude Quarkus tests from coverage reports:
+                    <!-- used to exclude all @QuarkusTest from the normal jacoco plugin, this data will be collected by the quarkus-jacoco dependency. -->
                     <exclClassLoaders>*QuarkusClassLoader</exclClassLoaders>
-                    -->
                     <destFile>${project.build.directory}/jacoco-quarkus.exec</destFile>
                     <append>true</append>
                 </configuration>
             </execution>
+            <!-- if you are not using quarkus you want to remove the exclusion for QuarkusClassLoader above and 
+                 activate report execution. (Quarkus generates report with quarkus-jacoco dependency) 
             <execution>
                 <id>report</id>
                 <phase>test</phase>
@@ -121,9 +131,10 @@ The backend workflow (`backend_workflow.yml`) orchestrates the full CI/CD pipeli
                     <dataFile>${project.build.directory}/jacoco-quarkus.exec</dataFile>
                     <outputDirectory>${project.build.directory}/jacoco-report</outputDirectory>
                 </configuration>
-            </execution>
+            </execution>-->
         </executions>
     </plugin>
+
 
     <!-- Executes integration tests. Can be omitted if there are none.
          Passes the same argLine as Surefire to ensure JaCoCo coverage works for integration tests. -->
