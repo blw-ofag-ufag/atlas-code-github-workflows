@@ -109,7 +109,7 @@ jobs:
 
   semantic-release:
     name: '.'
-    needs: [ checkstyle,gitleaks, owasp-dependency-check, unit-test-sonarqube, trivy-scan ]
+    needs: [ checkstyle, gitleaks, owasp-dependency-check, unit-test-sonarqube, trivy-scan ]
     if: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') }}
 
     uses: ./.github/workflows/semantic_release.yml

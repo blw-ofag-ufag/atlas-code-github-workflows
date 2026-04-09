@@ -45,7 +45,8 @@ jobs:
             ${{ runner.os }}-owasp-${{ steps.get-cache-date.outputs.date }}
             ${{ runner.os }}-owasp-
 
-
+      - name: Maven install
+        run: mvn -B install -DskipTests -T 1C
 
       - name: Run OWASP Dependency Check
         run: |
