@@ -105,7 +105,7 @@ jobs:
   unit-test-sonarqube:
     name: "."
     uses: ./.github/workflows/backend_unit_test_sonarqube.yml
-    needs: [ checkstyle, gitleaks ]
+    needs: [ checkstyle, gitleaks, owasp-dependency-check ]
     secrets:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
