@@ -35,9 +35,9 @@ The backend workflow (`backend_workflow.yml`) orchestrates the full CI/CD pipeli
 
 #### 🔐 Environment-specific Secrets
 
-| Secret | Description |
-|---|---|
-| `AWS_OIDC_ROLE_ARN` | ARN of the IAM Role for OIDC authentication (created in Terraform) |
+| Secret                    | Description                                                                                                                                                                             |
+|---------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `AWS_DEPLOYMENT_ROLE_ARN` | ARN of the IAM Role for OIDC authentication (created in Terraform in the backend blueprint after setting the repository for the application, search for "*-app-builder" in IAM > Roles) |
 
 #### 🤖 Required GitHub Apps
 
