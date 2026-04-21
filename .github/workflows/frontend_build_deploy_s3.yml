@@ -3,6 +3,11 @@ run-name: Build and Deploy - ${{ inputs.environment }} - ${{ inputs.version }}
 on:
   workflow_call:
     inputs:
+      enable:
+        description: 'Enable build and deploy'
+        required: false
+        default: true
+        type: boolean
       version:
         required: true
         type: string
@@ -40,6 +45,7 @@ jobs:
   # todo push to versioned s3 path / dont invalidate cache / instead create PR on Infrastructure repo to update origin path or copy the directory
   build-push-s3:
     name: Build and push application to S3 bucket
+    if: ${{ inputs.enable }}
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
     timeout-minutes: 5
