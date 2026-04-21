@@ -95,9 +95,10 @@ jobs:
 
   owasp-dependency-check:
     name: "."
-    if: ${{ inputs.enable-owasp-check }}
     uses: ./.github/workflows/backend_owasp_dependency_check.yml
     needs: [ checkstyle, gitleaks ]
+    with:
+      enable: ${{ inputs.enable-owasp-check }}
     secrets:
       NIST_OWASP_API_KEY: ${{ secrets.NIST_OWASP_API_KEY }}
 

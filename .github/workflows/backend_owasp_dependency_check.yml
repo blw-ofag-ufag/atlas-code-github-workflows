@@ -2,6 +2,12 @@ name: OWASP Dependency Check ensure no vulnerable dependencies
 run-name: OWASP Dependency Check
 on:
   workflow_call:
+    inputs:
+      enable:
+        description: 'Enable OWASP dependency check'
+        required: false
+        default: true
+        type: boolean
     secrets:
       NIST_OWASP_API_KEY:
         description: "API Key for the national vulnerability database used by OWASP Dependency Check"
@@ -9,6 +15,7 @@ on:
 jobs:
   owasp-dependency-check:
     name: OWASP Dependency Check
+    if: ${{ inputs.enable }}
     runs-on: ubuntu-latest
     timeout-minutes: 100
     steps:
