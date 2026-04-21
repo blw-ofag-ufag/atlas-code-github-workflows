@@ -3,6 +3,11 @@ run-name: "Update Infrastructure for ${{ inputs.application_name }} to ${{ input
 on:
   workflow_call:
     inputs:
+      enable:
+        description: "Enable or disable the infrastructure update workflow. Defaults to true."
+        required: false
+        default: true
+        type: boolean
       image_tag:
         description: 'Docker image tag to deploy'
         required: true
@@ -41,6 +46,7 @@ on:
 jobs:
   update-infrastructure:
     name: Update Infrastructure Configuration
+    if: ${{ inputs.enable }}
     runs-on: ubuntu-latest
 
     steps:

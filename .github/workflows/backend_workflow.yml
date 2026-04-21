@@ -49,6 +49,21 @@ on:
         required: false
         default: 'main'
         type: string
+      enable-owasp-check:
+        description: 'Enable OWASP dependency check'
+        required: false
+        default: true
+        type: boolean
+      enable-build-push:
+        description: 'Enable backend build and push'
+        required: false
+        default: true
+        type: boolean
+      enable-infrastructure-update:
+        description: 'Enable infrastructure update'
+        required: false
+        default: true
+        type: boolean
     secrets:
       SEMVER_PRIVATE_KEY:
         description: "GitHub App private key matching the semantic-release-app-id input, used for semantic-release authentication"
@@ -75,6 +90,45 @@ on:
         description: "GitHub App private key matching the deployment-app-id input, used for deployment authentication and creating PRs on the infrastructure repository"
         required: true
 jobs:
+  set-flags-from-commit:
+    name: Set flags from commit message
+    runs-on: ubuntu-latest
+    outputs:
+      enable-owasp-check: ${{ steps.set-flags.outputs.enable_owasp_check }}
+      enable-build-push: ${{ steps.set-flags.outputs.enable_build_push }}
+      enable-infrastructure-update: ${{ steps.set-flags.outputs.enable_infrastructure_update }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Get commit message
+        id: get-commit
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "::set-output name=msg::$(git log -1 --pretty=%B ${{ github.event.pull_request.head.sha }})"
+          else
+            echo "::set-output name=msg::$(git log -1 --pretty=%B ${{ github.sha }})"
+          fi
+      - name: Set flags
+        id: set-flags
+        run: |
+          msg="${{ steps.get-commit.outputs.msg }}"
+          echo "Commit message: $msg"
+          if echo "$msg" | grep -iq '\[skip owasp\]'; then
+            echo "enable_owasp_check=false" >> $GITHUB_OUTPUT
+          else
+            echo "enable_owasp_check=${{ inputs.enable-owasp-check }}" >> $GITHUB_OUTPUT
+          fi
+          if echo "$msg" | grep -iq '\[skip build-push\]'; then
+            echo "enable_build_push=false" >> $GITHUB_OUTPUT
+          else
+            echo "enable_build_push=${{ inputs.enable-build-push }}" >> $GITHUB_OUTPUT
+          fi
+          if echo "$msg" | grep -iq '\[skip infra-update\]'; then
+            echo "enable_infrastructure_update=false" >> $GITHUB_OUTPUT
+          else
+            echo "enable_infrastructure_update=${{ inputs.enable-infrastructure-update }}" >> $GITHUB_OUTPUT
+          fi
   checkstyle:
     name: "."
     uses: ./.github/workflows/backend_checkstyle.yml
@@ -91,14 +145,16 @@ jobs:
   owasp-dependency-check:
     name: "."
     uses: ./.github/workflows/backend_owasp_dependency_check.yml
-    needs: [ checkstyle, gitleaks ]
+    needs: [ checkstyle, gitleaks, set-flags-from-commit ]
+    with:
+      enable: ${{ needs.set-flags-from-commit.outputs.enable-owasp-check == 'true' }}
     secrets:
       NIST_OWASP_API_KEY: ${{ secrets.NIST_OWASP_API_KEY }}
 
   unit-test-sonarqube:
     name: "."
     uses: ./.github/workflows/backend_unit_test_sonarqube.yml
-    needs: [ checkstyle, gitleaks ]
+    needs: [ checkstyle, gitleaks, owasp-dependency-check ]
     secrets:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
@@ -120,10 +176,10 @@ jobs:
 
   build-and-push:
     name: '.'
-    if: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') }}
     uses: ./.github/workflows/backend_build_push_image.yml
-    needs: [ semantic-release ]
+    needs: [ semantic-release, set-flags-from-commit ]
     with:
+      enable: ${{ needs.set-flags-from-commit.outputs.enable-build-push == 'true' }}
       aws-region: ${{ inputs.aws-region }}
       ecr-repository-name: ${{ inputs.ecr-repository-name }}
       environment: ${{ inputs.environment }}
@@ -134,10 +190,11 @@ jobs:
 
   update-infrastructure:
     name: Update Infrastructure
-    needs: [ semantic-release, build-and-push ]
+    needs: [ semantic-release, build-and-push, set-flags-from-commit ]
     if: needs.build-and-push.result == 'success'
     uses: ./.github/workflows/update_infrastructure.yml
     with:
+      enable: ${{ needs.set-flags-from-commit.outputs.enable-infrastructure-update == 'true' }}
       image_tag: ${{ needs.semantic-release.outputs.version }}
       application_name: ${{inputs.application-name}}
       infrastructure_repo: ${{inputs.infrastructure_repo}}

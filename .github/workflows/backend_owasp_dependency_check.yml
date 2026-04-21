@@ -2,6 +2,12 @@ name: OWASP Dependency Check ensure no vulnerable dependencies
 run-name: OWASP Dependency Check
 on:
   workflow_call:
+    inputs:
+      enable:
+        description: 'Enable OWASP dependency check'
+        required: false
+        default: true
+        type: boolean
     secrets:
       NIST_OWASP_API_KEY:
         description: "API Key for the national vulnerability database used by OWASP Dependency Check"
@@ -23,44 +29,53 @@ jobs:
           java-version: '25'
           distribution: 'corretto'
 
-      - name: Get Date for OWASP Cache
-        id: get-cache-date
-        run: |
-          echo "date=$(/bin/date -u "+%Y%m%d")" >> $GITHUB_OUTPUT
-        shell: bash
-
-      - name: check NIST key length
-        env:
-          NIST_OWASP_API_KEY: ${{ secrets.NIST_OWASP_API_KEY }}
-        run: |
-          echo "Key length: ${#NIST_OWASP_API_KEY}"
-
       - name: Restore Maven Cache
         uses: actions/cache/restore@v5
         with:
           path: ~/.m2/repository
-          # Using date in cache key as OWASP database may change, without the pom changing
-          key: ${{ runner.os }}-owasp-${{ steps.get-cache-date.outputs.date }}-${{ hashFiles('**/pom.xml') }}
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
           restore-keys: |
-            ${{ runner.os }}-owasp-${{ steps.get-cache-date.outputs.date }}
-            ${{ runner.os }}-owasp-
+            ${{ runner.os }}-maven-
 
       - name: Maven install
         run: mvn -B install -DskipTests -T 1C
 
+      - name: Get Date for OWASP Cache
+        id: get-cache-date
+        run: |
+          echo "date=$(/bin/date -u "+%Y%m%d%H")" >> $GITHUB_OUTPUT
+        shell: bash
+
+      - name: Restore Dependency-Check Cache
+        if: inputs.enable
+        uses: actions/cache/restore@v5
+        with:
+          path: ${{ github.workspace }}/.dependency-check
+          key: ${{ runner.os }}-dependency-check-${{ steps.get-cache-date.outputs.date }}
+          restore-keys: |
+            ${{ runner.os }}-dependency-check-
+
       - name: Run OWASP Dependency Check
+        if: inputs.enable
         run: |
           mvn org.owasp:dependency-check-maven:check \
+            -DdataDirectory="${{ github.workspace }}/.dependency-check" \
             -DossindexAnalyzerEnabled=false \
             -DnvdApiKey=${{ secrets.NIST_OWASP_API_KEY }} \
-            -DossindexAnalyzerEnabled=false \
             -DpnpmAuditAnalyzerEnabled=false \
             -DnodeAuditAnalyzerEnabled=false \
             -DyarnAuditAnalyzerEnabled=false
 
+      - name: Save Dependency-Check Cache
+        uses: actions/cache/save@v5
+        if: inputs.enable
+        with:
+          path: ${{ github.workspace }}/.dependency-check
+          key: ${{ runner.os }}-dependency-check-${{ steps.get-cache-date.outputs.date }}
+
       - name: Save Maven Cache
         uses: actions/cache/save@v5
-        if: always()
+        if: success()
         with:
           path: ~/.m2/repository
-          key: ${{ runner.os }}-owasp-${{ steps.get-cache-date.outputs.date }}-${{ hashFiles('**/pom.xml') }}
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
