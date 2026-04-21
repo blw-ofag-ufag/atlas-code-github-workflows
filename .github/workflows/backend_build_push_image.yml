@@ -3,6 +3,11 @@ run-name: Build and Push to ECR - ${{ inputs.environment }} - ${{ inputs.version
 on:
   workflow_call:
     inputs:
+      enable:
+        description: "Enable or disable the build and push workflow. Defaults to true."
+        required: false
+        default: true
+        type: boolean
       environment:
         type: string
         required: true
@@ -52,6 +57,7 @@ jobs:
 
   build-push-image:
     name: "Build and push docker image to ECR  ${{ inputs.environment }} - ${{ inputs.version }}"
+    if: ${{ inputs.enable }}
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
     timeout-minutes: 5
