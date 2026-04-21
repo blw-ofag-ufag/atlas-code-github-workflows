@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.2](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/compare/v1.0.1...v1.0.2) (2026-04-21)
+
+
+### Bug Fixes
+
+* owasp dependency check, image push to ECR ([#20](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/issues/20)) ([e40ddf1](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/commit/e40ddf11778b2e745e1116a29d8f1aee1f9f4a4b))
+
 ## [1.0.1](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/compare/v1.0.0...v1.0.1) (2026-04-09)
 
 
