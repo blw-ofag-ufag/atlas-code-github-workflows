@@ -49,6 +49,11 @@ on:
         required: false
         default: 'main'
         type: string
+      enable-owasp-check:
+        description: 'Enable OWASP dependency check'
+        required: false
+        default: true
+        type: boolean
     secrets:
       SEMVER_PRIVATE_KEY:
         description: "GitHub App private key matching the semantic-release-app-id input, used for semantic-release authentication"
@@ -90,6 +95,7 @@ jobs:
 
   owasp-dependency-check:
     name: "."
+    if: ${{ inputs.enable-owasp-check }}
     uses: ./.github/workflows/backend_owasp_dependency_check.yml
     needs: [ checkstyle, gitleaks ]
     secrets:
