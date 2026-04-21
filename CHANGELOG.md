@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.3](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/compare/v1.0.2...v1.0.3) (2026-04-21)
+
+
+### Bug Fixes
+
+* add flag to enable build and push ([63895b9](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/commit/63895b9f1efe04ec503625b6eb9c3980eb752718))
+
 ## [1.0.2](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/compare/v1.0.1...v1.0.2) (2026-04-21)
 
 
