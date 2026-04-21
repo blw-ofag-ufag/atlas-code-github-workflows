@@ -15,7 +15,6 @@ on:
 jobs:
   owasp-dependency-check:
     name: OWASP Dependency Check
-    if: ${{ inputs.enable }}
     runs-on: ubuntu-latest
     timeout-minutes: 100
     steps:
@@ -48,6 +47,7 @@ jobs:
         shell: bash
 
       - name: Restore Dependency-Check Cache
+        if: inputs.enable
         uses: actions/cache/restore@v5
         with:
           path: ${{ github.workspace }}/.dependency-check
@@ -56,6 +56,7 @@ jobs:
             ${{ runner.os }}-dependency-check-
 
       - name: Run OWASP Dependency Check
+        if: inputs.enable
         run: |
           mvn org.owasp:dependency-check-maven:check \
             -DdataDirectory="${{ github.workspace }}/.dependency-check" \
@@ -67,7 +68,7 @@ jobs:
 
       - name: Save Dependency-Check Cache
         uses: actions/cache/save@v5
-        if: always()
+        if: inputs.enable
         with:
           path: ${{ github.workspace }}/.dependency-check
           key: ${{ runner.os }}-dependency-check-${{ steps.get-cache-date.outputs.date }}
