@@ -23,6 +23,11 @@ on:
         required: true
         type: string
         description: "Version tag for the Docker image"
+      enable-maven-build:
+        required: false
+        default: true
+        type: boolean
+        description: "Run JDK setup, Maven cache restore, and Maven package. Set to false for images whose Dockerfile handles the build (e.g. multi-stage Node builds)."
     secrets:
       AWS_OIDC_ROLE_ARN:
         description: "OIDC role ARN for AWS credentials"
@@ -37,6 +42,7 @@ on:
 jobs:
   # Validate secrets to match an expected regex pattern to facilitate debugging of misconfigured secrets.
   validate-secret-values:
+    if: ${{ inputs.enable }}
     runs-on: ubuntu-latest
     environment:  ${{ inputs.environment }}
     steps:
@@ -58,9 +64,10 @@ jobs:
   build-push-image:
     name: "Build and push docker image to ECR  ${{ inputs.environment }} - ${{ inputs.version }}"
     if: ${{ inputs.enable }}
+    needs: validate-secret-values
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
-    timeout-minutes: 5
+    timeout-minutes: 15
     outputs:
       image: ${{ steps.push-image.outputs.image }}
     env:
@@ -90,12 +97,14 @@ jobs:
           ref: ${{ format('v{0}', inputs.version) }}
 
       - name: Set up JDK
+        if: ${{ inputs.enable-maven-build }}
         uses: actions/setup-java@v5
         with:
           java-version: '25'
           distribution: 'corretto'
 
       - name: Restore Maven Cache
+        if: ${{ inputs.enable-maven-build }}
         uses: actions/cache/restore@v5
         with:
           path: ~/.m2/repository
@@ -104,6 +113,7 @@ jobs:
             ${{ runner.os }}-maven-
 
       - name: Maven package
+        if: ${{ inputs.enable-maven-build }}
         run: mvn -B clean package -DskipTests -T 1C
 
       - name: Set image tag to GITHUB_ENV
