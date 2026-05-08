@@ -1,0 +1,14 @@
+name: scheduled_dependency_check.yml
+on:
+  schedule:
+    - cron: '12 18 * * 0' #  Run every Sunday at 18:12 (UTC)
+
+jobs:
+  owasp-dependency-check:
+    name: "OWASP Dependency Check"
+    uses: ./.github/workflows/backend_owasp_dependency_check.yml
+    with:
+      enable: true
+    secrets:
+      NIST_OWASP_API_KEY: ${{ secrets.NIST_OWASP_API_KEY }}
+
