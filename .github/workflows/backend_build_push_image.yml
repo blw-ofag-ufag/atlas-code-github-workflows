@@ -28,6 +28,12 @@ on:
         default: true
         type: boolean
         description: "Run JDK setup, Maven cache restore, and Maven package. Set to false for images whose Dockerfile handles the build (e.g. multi-stage Node builds)."
+      enable-pnpm-build:
+        required: false
+        default: false
+        type: boolean
+        description: "do pnpm install and pnpm build"
+
     secrets:
       AWS_OIDC_ROLE_ARN:
         description: "OIDC role ARN for AWS credentials"
@@ -95,6 +101,26 @@ jobs:
         uses: actions/checkout@v6
         with:
           ref: ${{ format('v{0}', inputs.version) }}
+
+      - name: Set up pnpm
+        if: ${{ inputs.enable-pnpm-build }}
+        uses: pnpm/action-setup@v5
+
+      - name: Set up Node.js
+        if: ${{ inputs.enable-pnpm-build }}
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        if: ${{ inputs.enable-pnpm-build }}
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Build
+        if: ${{ inputs.enable-pnpm-build }}
+        run: pnpm build
 
       - name: Set up JDK
         if: ${{ inputs.enable-maven-build }}
