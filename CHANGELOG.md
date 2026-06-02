@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/compare/v1.0.3...v1.1.0) (2026-06-02)
+
+
+### Features
+
+* support for docker image with node build A1-21 ([e2b55f9](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/commit/e2b55f9a85aa419fb12ae5b864b04af7bcb8f00d))
+
 ## [1.0.3](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/compare/v1.0.2...v1.0.3) (2026-04-21)
 
 
