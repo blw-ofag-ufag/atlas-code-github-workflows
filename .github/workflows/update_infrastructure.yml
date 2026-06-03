@@ -81,7 +81,7 @@ jobs:
           echo "Updating ${{ inputs.application_name }} to version $VERSION_TAG"
           
           # Update the image_tag for the specified application
-          jq --arg app "${{ inputs.application_name }}-version" \
+          jq --arg app "${{ inputs.application_name }}_version" \
           --arg tag "$VERSION_TAG" \
           '.[$app] = $tag' \
           "${{ inputs.tfvars_path }}" > temp.json && \
