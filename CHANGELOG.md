@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/compare/v1.1.0...v1.1.1) (2026-06-03)
+
+
+### Bug Fixes
+
+* use underscore separator for application version key in tfvars ([8addfb9](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/commit/8addfb9a6ffa1eb09bba42cd2af51e26464a7333))
+
 ## [1.1.0](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/compare/v1.0.3...v1.1.0) (2026-06-02)
 
 
