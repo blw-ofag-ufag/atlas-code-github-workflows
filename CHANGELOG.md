@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.2](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/compare/v1.1.1...v1.1.2) (2026-06-16)
+
+
+### Bug Fixes
+
+* skip build-and-push when semantic-release produces no version ([7bbf3f6](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/commit/7bbf3f6736a58c1fa0ecc4ed1daf0a0ba71ac8f5))
+
 ## [1.1.1](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/compare/v1.1.0...v1.1.1) (2026-06-03)
 
 
