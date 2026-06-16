@@ -178,6 +178,7 @@ jobs:
     name: '.'
     uses: ./.github/workflows/backend_build_push_image.yml
     needs: [ semantic-release, set-flags-from-commit ]
+    if: needs.semantic-release.outputs.version != ''
     with:
       enable: ${{ needs.set-flags-from-commit.outputs.enable-build-push == 'true' }}
       aws-region: ${{ inputs.aws-region }}
