@@ -1,0 +1,255 @@
+name: "e2e test automation workflow that scans for secrets, vulnerabilities and code quality issues, creates a release and builds/pushes the test-runner docker image to ECR (and updates infrastructure with the new image tag)"
+run-name: "e2e test workflow for environment: ${{ inputs.environment }}"
+permissions:
+  contents: write
+  pull-requests: write
+  id-token: write
+  issues: write
+on:
+  workflow_call:
+    inputs:
+      semver-app-id:
+        description: "GitHub App ID used for semantic versioning, must have write permissions to the repo"
+        required: true
+        type: string
+      environment:
+        description: "Deployment environment used to resolve secrets (e.g., dev, int)"
+        required: true
+        type: string
+      aws-region:
+        description: "AWS region for deployment and AWS CLI commands"
+        required: true
+        type: string
+      ecr-repository-name:
+        description: "ECR repository name for pushing the built test-runner image"
+        required: true
+        type: string
+      gitleaks-app-id:
+        description: "GitHub App ID used by gitleaks to authenticate with the GitHub API (must have read permissions to the repo and PRs)"
+        required: true
+        type: string
+      deployment-app-id:
+        description: "GitHub App ID used for deployment authentication, must have permissions to create PRs on the infrastructure repository"
+        required: true
+        type: string
+      application-name:
+        description: "Name of the application, used for tagging docker images and identifying the infrastructure as code to update"
+        required: true
+        type: string
+      github-organization:
+        description: "GitHub organization that owns the infrastructure repository"
+        required: true
+        type: string
+      infrastructure_repo:
+        description: "Name of the infrastructure repository"
+        required: true
+        type: string
+      infrastructure_base_branch:
+        description: "Base branch for the infrastructure PR"
+        required: false
+        default: "main"
+        type: string
+      node-version:
+        description: "Node.js version used for the quality, audit and sonar jobs"
+        required: false
+        default: "24"
+        type: string
+      pnpm-audit-level:
+        description: "Minimum severity that fails the pnpm audit job (info|low|moderate|high|critical)"
+        required: false
+        default: "high"
+        type: string
+      pnpm-audit-prod:
+        description: "Audit production dependencies only. Test repos usually have only devDependencies, so the default audits all of them."
+        required: false
+        default: false
+        type: boolean
+      enable-node-quality:
+        description: "Run the lint / format-check / typecheck job"
+        required: false
+        default: true
+        type: boolean
+      enable-sonar:
+        description: "Run the SonarCloud analysis job"
+        required: false
+        default: true
+        type: boolean
+      enable-build-push:
+        description: "Build and push the test-runner docker image"
+        required: false
+        default: true
+        type: boolean
+      enable-infrastructure-update:
+        description: "Open an infrastructure PR with the new image tag"
+        required: false
+        default: true
+        type: boolean
+    secrets:
+      SEMVER_PRIVATE_KEY:
+        description: "GitHub App private key matching semver-app-id, used for semantic-release authentication"
+        required: true
+      AWS_OIDC_ROLE_ARN:
+        description: "OIDC role ARN for AWS credentials"
+        required: true
+      AWS_DEPLOYMENT_ROLE_ARN:
+        description: "Deployment role ARN for AWS credentials"
+        required: true
+      GH_ORG_GITLEAKS_PRIVATE_KEY:
+        description: "GitHub App private key matching gitleaks-app-id, used for gitleaks authentication"
+        required: true
+      LICENSE_KEY_GITLEAKS:
+        description: "Gitleaks license key"
+        required: true
+      SONAR_TOKEN:
+        description: "SonarQube authentication token"
+        required: true
+      DEPLOYMENT_APP_PRIVATE_KEY:
+        description: "GitHub App private key matching deployment-app-id, used for creating PRs on the infrastructure repository"
+        required: true
+jobs:
+  set-flags-from-commit:
+    name: Set flags from commit message
+    runs-on: ubuntu-latest
+    outputs:
+      enable-build-push: ${{ steps.set-flags.outputs.enable_build_push }}
+      enable-infrastructure-update: ${{ steps.set-flags.outputs.enable_infrastructure_update }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Set flags
+        id: set-flags
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PUSH_SHA: ${{ github.sha }}
+        run: |
+          if [ "$EVENT_NAME" = "pull_request" ]; then SHA="$PR_HEAD_SHA"; else SHA="$PUSH_SHA"; fi
+          msg="$(git log -1 --pretty=%B "$SHA")"
+          echo "Commit message: $msg"
+          if echo "$msg" | grep -iq '\[skip build-push\]'; then
+            echo "enable_build_push=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "enable_build_push=${{ inputs.enable-build-push }}" >> "$GITHUB_OUTPUT"
+          fi
+          if echo "$msg" | grep -iq '\[skip infra-update\]'; then
+            echo "enable_infrastructure_update=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "enable_infrastructure_update=${{ inputs.enable-infrastructure-update }}" >> "$GITHUB_OUTPUT"
+          fi
+
+  # Security scans and quality checks: report-only for now. They run and report
+  # red/green but are intentionally not in semantic-release.needs, so they don't
+  # gate release/merge. Promote them to required checks via branch protection.
+  gitleaks:
+    name: "."
+    uses: blw-ofag-ufag/atlas-code-github-workflows/.github/workflows/gitleaks.yml@v1.1.2
+    secrets:
+      GH_ORG_GITLEAKS_PRIVATE_KEY: ${{ secrets.GH_ORG_GITLEAKS_PRIVATE_KEY }}
+      LICENSE_KEY_GITLEAKS: ${{ secrets.LICENSE_KEY_GITLEAKS }}
+    with:
+      gitleaks-app-id: ${{ inputs.gitleaks-app-id }}
+
+  trivy-scan:
+    name: "."
+    uses: blw-ofag-ufag/atlas-code-github-workflows/.github/workflows/trivy_scan.yml@v1.1.2
+
+  pnpm-audit:
+    name: pnpm audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node-version }}
+      - run: pnpm audit --audit-level=${{ inputs.pnpm-audit-level }} ${{ inputs.pnpm-audit-prod && '--prod' || '' }}
+
+  node-quality:
+    name: Lint & typecheck
+    if: ${{ inputs.enable-node-quality }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node-version }}
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+      - run: pnpm lint
+      - run: pnpm run format:check
+      - run: pnpm run typecheck
+
+  sonarcloud:
+    name: SonarCloud
+    if: ${{ inputs.enable-sonar }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ inputs.node-version }}
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: SonarCloud analysis
+        uses: SonarSource/sonarqube-scan-action@v7
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          projectBaseDir: .
+
+  semantic-release:
+    name: "."
+    if: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') }}
+    uses: blw-ofag-ufag/atlas-code-github-workflows/.github/workflows/semantic_release.yml@v1.1.2
+    secrets:
+      SEMVER_PRIVATE_KEY: ${{ secrets.SEMVER_PRIVATE_KEY }}
+    with:
+      app-id: ${{ inputs.semver-app-id }}
+
+  build-and-push:
+    name: "."
+    uses: blw-ofag-ufag/atlas-code-github-workflows/.github/workflows/backend_build_push_image.yml@v1.1.2
+    needs: [set-flags-from-commit, semantic-release]
+    # Skip when semantic-release produced no version (e.g. tooling-only pushes),
+    # otherwise the build receives an empty version and fails.
+    if: ${{ needs.semantic-release.outputs.version != '' }}
+    with:
+      enable: ${{ needs.set-flags-from-commit.outputs.enable-build-push == 'true' }}
+      aws-region: ${{ inputs.aws-region }}
+      ecr-repository-name: ${{ inputs.ecr-repository-name }}
+      environment: ${{ inputs.environment }}
+      version: ${{ needs.semantic-release.outputs.version }}
+      enable-maven-build: false
+      enable-pnpm-build: true
+    secrets:
+      AWS_OIDC_ROLE_ARN: ${{ secrets.AWS_OIDC_ROLE_ARN }}
+      AWS_DEPLOYMENT_ROLE_ARN: ${{ secrets.AWS_DEPLOYMENT_ROLE_ARN }}
+
+  update-infrastructure:
+    name: Update Infrastructure
+    needs: [semantic-release, build-and-push, set-flags-from-commit]
+    if: needs.build-and-push.result == 'success'
+    uses: blw-ofag-ufag/atlas-code-github-workflows/.github/workflows/update_infrastructure.yml@v1.1.2
+    with:
+      enable: ${{ needs.set-flags-from-commit.outputs.enable-infrastructure-update == 'true' }}
+      image_tag: ${{ needs.semantic-release.outputs.version }}
+      application_name: ${{ inputs.application-name }}
+      infrastructure_repo: ${{ inputs.infrastructure_repo }}
+      tfvars_path: "terraform/terraform.auto.tfvars.json"
+      base_branch: ${{ inputs.infrastructure_base_branch }}
+      app-id: ${{ inputs.deployment-app-id }}
+      github-organization: ${{ inputs.github-organization }}
+    secrets:
+      GH_APP_PRIVATE_KEY: ${{ secrets.DEPLOYMENT_APP_PRIVATE_KEY }}
