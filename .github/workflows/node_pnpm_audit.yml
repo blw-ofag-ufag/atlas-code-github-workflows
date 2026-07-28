@@ -1,0 +1,45 @@
+name: pnpm audit
+run-name: pnpm audit
+permissions:
+  contents: read
+
+on:
+  workflow_call:
+    inputs:
+      node-version:
+        description: "Node.js version"
+        required: false
+        default: "24"
+        type: string
+      audit-level:
+        description: "Minimum severity that fails the audit (info|low|moderate|high|critical)"
+        required: false
+        default: "high"
+        type: string
+      prod:
+        description: "Audit production dependencies only. Test repos usually have only devDependencies, so the default audits all of them."
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  pnpm-audit:
+    name: pnpm audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v5
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ inputs.node-version }}
+
+      - name: pnpm audit
+        run: pnpm audit --audit-level=${{ inputs.audit-level }} ${{ inputs.prod && '--prod' || '' }}

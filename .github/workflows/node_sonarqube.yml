@@ -1,14 +1,36 @@
-name: Unit Tests and SonarQube
-run-name: Unit Tests and SonarQube
+# Runs pnpm test (for coverage) and lint before the analysis by default; both are
+# toggleable via inputs. Repos without unit tests set run-tests: false.
+name: Unit tests & SonarQube
+run-name: Unit tests & SonarQube
+permissions:
+  contents: read
+
 on:
   workflow_call:
+    inputs:
+      node-version:
+        description: "Node.js version"
+        required: false
+        default: "24"
+        type: string
+      run-lint:
+        description: "Run pnpm lint before the analysis"
+        required: false
+        default: true
+        type: boolean
+      run-tests:
+        description: "Run pnpm test (for coverage) before the analysis. Disable for repos without unit tests."
+        required: false
+        default: true
+        type: boolean
     secrets:
       SONAR_TOKEN:
         description: "SonarQube authentication token"
         required: true
+
 jobs:
   unit-test-sonarqube:
-    name: Unit Tests and SonarQube
+    name: Unit tests & SonarQube
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
@@ -25,7 +47,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: 24
+          node-version: ${{ inputs.node-version }}
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
 
@@ -33,12 +55,14 @@ jobs:
         run: pnpm install --frozen-lockfile --ignore-scripts
 
       - name: Lint
+        if: ${{ inputs.run-lint }}
         run: pnpm lint
 
       - name: Run unit tests
+        if: ${{ inputs.run-tests }}
         run: pnpm test
 
-      - name: Run SonarQube Analysis
+      - name: Run SonarQube analysis
         uses: SonarSource/sonarqube-scan-action@v7
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

@@ -1,0 +1,91 @@
+name: "run e2e tests as a one-off ECS Fargate task (uploads the report to S3 and notifies via SES, driven by the task definition's entrypoint)"
+run-name: "run e2e ECS tests for environment: ${{ inputs.environment }}"
+
+permissions:
+  id-token: write
+  contents: read
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: "Deployment environment used to resolve secrets/vars (e.g., dev, int)"
+        required: true
+        type: string
+      aws-region:
+        description: "AWS region of the ECS cluster"
+        required: true
+        type: string
+      vpc-id:
+        description: "VPC ID the task runs in"
+        required: true
+        type: string
+      security-group-name:
+        description: "Name of the security group attached to the task"
+        required: true
+        type: string
+      task-family:
+        description: "Task definition family prefix; the latest revision is used"
+        required: true
+        type: string
+      ecs-cluster:
+        description: "ECS cluster name the task runs on"
+        required: true
+        type: string
+      subnet-identifier:
+        description: "Value of the SubnetIdentifier tag selecting the private subnet"
+        required: false
+        default: "app"
+        type: string
+    secrets:
+      AWS_DEPLOYMENT_ROLE_ARN:
+        description: "Deployment role ARN assumed to run the task"
+        required: true
+
+jobs:
+  run-ecs-task:
+    name: "Trigger ECS e2e task"
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOYMENT_ROLE_ARN }}
+          aws-region: ${{ inputs.aws-region }}
+
+      - name: Resolve network configuration
+        id: network
+        run: |
+          PRIVATE_SUBNET=$(aws ec2 describe-subnets \
+            --filters "Name=vpc-id,Values=${{ inputs.vpc-id }}" "Name=map-public-ip-on-launch,Values=false" "Name=tag:SubnetIdentifier,Values=${{ inputs.subnet-identifier }}" \
+            --query 'Subnets[0].SubnetId' \
+            --output text)
+
+          SECURITY_GROUP=$(aws ec2 describe-security-groups \
+            --filters "Name=vpc-id,Values=${{ inputs.vpc-id }}" "Name=group-name,Values=${{ inputs.security-group-name }}" \
+            --query 'SecurityGroups[0].GroupId' \
+            --output text)
+
+          echo "subnet=$PRIVATE_SUBNET" >> "$GITHUB_OUTPUT"
+          echo "sg=$SECURITY_GROUP" >> "$GITHUB_OUTPUT"
+
+      - name: Resolve latest task definition
+        id: task-def
+        run: |
+          TASK_DEF_ARN=$(aws ecs list-task-definitions \
+            --family-prefix ${{ inputs.task-family }} \
+            --sort DESC \
+            --max-items 1 \
+            --query 'taskDefinitionArns[0]' \
+            --output text)
+
+          echo "arn=$TASK_DEF_ARN" >> "$GITHUB_OUTPUT"
+
+      - name: Run ECS task
+        run: |
+          aws ecs run-task \
+            --cluster ${{ inputs.ecs-cluster }} \
+            --task-definition "${{ steps.task-def.outputs.arn }}" \
+            --launch-type FARGATE \
+            --network-configuration "awsvpcConfiguration={subnets=[${{ steps.network.outputs.subnet }}],securityGroups=[${{ steps.network.outputs.sg }}]}"
