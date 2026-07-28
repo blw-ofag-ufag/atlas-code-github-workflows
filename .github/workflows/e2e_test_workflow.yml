@@ -142,8 +142,8 @@ jobs:
   # red/green but are intentionally not in semantic-release.needs, so they don't
   # gate release/merge. Promote them to required checks via branch protection.
   gitleaks:
-    name: "."
-    uses: blw-ofag-ufag/atlas-code-github-workflows/.github/workflows/gitleaks.yml@v1.1.2
+    name: Secret scan
+    uses: ./.github/workflows/gitleaks.yml
     secrets:
       GH_ORG_GITLEAKS_PRIVATE_KEY: ${{ secrets.GH_ORG_GITLEAKS_PRIVATE_KEY }}
       LICENSE_KEY_GITLEAKS: ${{ secrets.LICENSE_KEY_GITLEAKS }}
@@ -151,76 +151,47 @@ jobs:
       gitleaks-app-id: ${{ inputs.gitleaks-app-id }}
 
   trivy-scan:
-    name: "."
-    uses: blw-ofag-ufag/atlas-code-github-workflows/.github/workflows/trivy_scan.yml@v1.1.2
+    name: Vulnerability scan
+    uses: ./.github/workflows/trivy_scan.yml
 
   pnpm-audit:
-    name: pnpm audit
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ inputs.node-version }}
-      - run: pnpm audit --audit-level=${{ inputs.pnpm-audit-level }} ${{ inputs.pnpm-audit-prod && '--prod' || '' }}
+    name: Dependency audit
+    uses: ./.github/workflows/node_pnpm_audit.yml
+    with:
+      node-version: ${{ inputs.node-version }}
+      audit-level: ${{ inputs.pnpm-audit-level }}
+      prod: ${{ inputs.pnpm-audit-prod }}
 
   node-quality:
-    name: Lint & typecheck
+    name: Code quality
     if: ${{ inputs.enable-node-quality }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ inputs.node-version }}
-          cache: pnpm
-          cache-dependency-path: pnpm-lock.yaml
-      - run: pnpm install --frozen-lockfile --ignore-scripts
-      - run: pnpm lint
-      - run: pnpm run format:check
-      - run: pnpm run typecheck
+    uses: ./.github/workflows/node_quality.yml
+    with:
+      node-version: ${{ inputs.node-version }}
 
-  sonarcloud:
-    name: SonarCloud
+  sonarqube:
+    name: Static analysis
     if: ${{ inputs.enable-sonar }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    env:
+    uses: ./.github/workflows/node_sonarqube.yml
+    with:
+      node-version: ${{ inputs.node-version }}
+      run-lint: false
+      run-tests: false
+    secrets:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-      - uses: pnpm/action-setup@v5
-      - uses: actions/setup-node@v6
-        with:
-          node-version: ${{ inputs.node-version }}
-          cache: pnpm
-          cache-dependency-path: pnpm-lock.yaml
-      - run: pnpm install --frozen-lockfile --ignore-scripts
-      - name: SonarCloud analysis
-        uses: SonarSource/sonarqube-scan-action@v7
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        with:
-          projectBaseDir: .
 
   semantic-release:
-    name: "."
+    name: Release
     if: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') }}
-    uses: blw-ofag-ufag/atlas-code-github-workflows/.github/workflows/semantic_release.yml@v1.1.2
+    uses: ./.github/workflows/semantic_release.yml
     secrets:
       SEMVER_PRIVATE_KEY: ${{ secrets.SEMVER_PRIVATE_KEY }}
     with:
       app-id: ${{ inputs.semver-app-id }}
 
   build-and-push:
-    name: "."
-    uses: blw-ofag-ufag/atlas-code-github-workflows/.github/workflows/backend_build_push_image.yml@v1.1.2
+    name: Build & push image
+    uses: ./.github/workflows/backend_build_push_image.yml
     needs: [set-flags-from-commit, semantic-release]
     # Skip when semantic-release produced no version (e.g. tooling-only pushes),
     # otherwise the build receives an empty version and fails.
@@ -241,7 +212,7 @@ jobs:
     name: Update Infrastructure
     needs: [semantic-release, build-and-push, set-flags-from-commit]
     if: needs.build-and-push.result == 'success'
-    uses: blw-ofag-ufag/atlas-code-github-workflows/.github/workflows/update_infrastructure.yml@v1.1.2
+    uses: ./.github/workflows/update_infrastructure.yml
     with:
       enable: ${{ needs.set-flags-from-commit.outputs.enable-infrastructure-update == 'true' }}
       image_tag: ${{ needs.semantic-release.outputs.version }}

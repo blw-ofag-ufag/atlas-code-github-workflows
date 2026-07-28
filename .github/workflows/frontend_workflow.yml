@@ -68,9 +68,12 @@ jobs:
     with:
       gitleaks-app-id: ${{ inputs.gitleaks-app-id }}
 
-  npm-audit:
+  pnpm-audit:
     name: '.'
-    uses: ./.github/workflows/frontend_npm_audit.yml
+    uses: ./.github/workflows/node_pnpm_audit.yml
+    with:
+      prod: true
+      audit-level: high
 
   trivy-scan:
     name: "."
@@ -78,8 +81,11 @@ jobs:
 
   unit-test-sonarqube:
     name: '.'
-    uses: ./.github/workflows/frontend_unit_test_sonarqube.yml
-    needs: [ gitleaks, npm-audit, trivy-scan]
+    uses: ./.github/workflows/node_sonarqube.yml
+    needs: [ gitleaks, pnpm-audit, trivy-scan]
+    with:
+      run-lint: true
+      run-tests: true
     secrets:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
@@ -87,7 +93,7 @@ jobs:
     name: '.'
     if: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') }}
     uses: ./.github/workflows/semantic_release.yml
-    needs: [ unit-test-sonarqube, gitleaks, npm-audit, trivy-scan ]
+    needs: [ unit-test-sonarqube, gitleaks, pnpm-audit, trivy-scan ]
     secrets:
       SEMVER_PRIVATE_KEY: ${{ secrets.SEMVER_PRIVATE_KEY }}
     with:
