@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/compare/v1.1.2...v1.2.0) (2026-07-28)
+
+
+### Features
+
+* add generic e2e test automation and ECS runner reusable workflows ([#28](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/issues/28)) ([c6b64be](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/commit/c6b64bea108bf1bb29729c02155f2542bdeda417))
+
 ## [1.1.2](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/compare/v1.1.1...v1.1.2) (2026-06-16)
 
 
