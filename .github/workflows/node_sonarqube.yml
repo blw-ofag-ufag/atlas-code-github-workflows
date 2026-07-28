@@ -1,5 +1,7 @@
-name: SonarQube
-run-name: SonarQube
+# Runs pnpm test (for coverage) and lint before the analysis by default; both are
+# toggleable via inputs. Repos without unit tests set run-tests: false.
+name: Unit tests & SonarQube
+run-name: Unit tests & SonarQube
 permissions:
   contents: read
 
@@ -27,8 +29,8 @@ on:
         required: true
 
 jobs:
-  sonarqube:
-    name: SonarQube analysis
+  unit-test-sonarqube:
+    name: Unit tests & SonarQube
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
