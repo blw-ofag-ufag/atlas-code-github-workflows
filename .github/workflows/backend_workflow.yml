@@ -214,4 +214,4 @@ jobs:
     secrets:
       SEMVER_PRIVATE_KEY: ${{ secrets.SEMVER_PRIVATE_KEY }}
     with:
-      app-id: ${{ inputs.app-id }}
+      app-id: ${{ inputs.semver-app-id }}
