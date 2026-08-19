@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.2.1](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/compare/v1.2.0...v1.2.1) (2026-08-19)
+
+
+### Bug Fixes
+
+* fixes merge back input variable for semver app id ([0dde54e](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/commit/0dde54efc550f628721bf8a204b2946840985d5f))
+* gate e2e semantic-release on all preceding checks ([#31](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/issues/31)) ([327deec](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/commit/327deec7ceb1ba6aab3e7abcbdab11408d389d07))
+
 ## [1.2.0](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/compare/v1.1.2...v1.2.0) (2026-07-28)
 
 
