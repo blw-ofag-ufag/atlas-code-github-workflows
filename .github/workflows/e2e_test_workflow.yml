@@ -138,9 +138,9 @@ jobs:
             echo "enable_infrastructure_update=${{ inputs.enable-infrastructure-update }}" >> "$GITHUB_OUTPUT"
           fi
 
-  # Security scans and quality checks: report-only for now. They run and report
-  # red/green but are intentionally not in semantic-release.needs, so they don't
-  # gate release/merge. Promote them to required checks via branch protection.
+  # Security scans and quality checks. All of them gate semantic-release: the
+  # release only runs once every one of them is green (or skipped via its
+  # enable-* input).
   gitleaks:
     name: Secret scan
     uses: ./.github/workflows/gitleaks.yml
@@ -182,7 +182,16 @@ jobs:
 
   semantic-release:
     name: Release
-    if: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') }}
+    needs: [gitleaks, trivy-scan, pnpm-audit, node-quality, sonarqube]
+    # A custom if replaces the implicit success(), which would skip the release
+    # whenever node-quality / sonarqube are skipped via their enable-* inputs.
+    # !failure() && !cancelled() restores the gate for the checks that did run.
+    if: >-
+      ${{
+        !failure() && !cancelled()
+        && github.event_name == 'push'
+        && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+      }}
     uses: ./.github/workflows/semantic_release.yml
     secrets:
       SEMVER_PRIVATE_KEY: ${{ secrets.SEMVER_PRIVATE_KEY }}
