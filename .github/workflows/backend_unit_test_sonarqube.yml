@@ -2,6 +2,16 @@ name: Unit Tests and SonarQube analysis for Java backend
 run-name: Unit Tests and SonarQube
 on:
   workflow_call:
+    inputs:
+      enable-integration-tests:
+        description: >-
+          Also run Maven integration tests (Failsafe, `*IT` classes). Uses `mvn verify` instead of
+          `mvn test`, so the build reaches the package phase and any verify-bound plugin (Failsafe,
+          aggregated JaCoCo report, Checkstyle) executes. Defaults to false so repositories without
+          integration tests keep the faster unit-test-only run.
+        required: false
+        default: false
+        type: boolean
     secrets:
       SONAR_TOKEN:
         description: "SonarQube authentication token"
@@ -10,7 +20,8 @@ jobs:
   unit-test-sonarqube:
     name: Unit Tests and SonarQube
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    # Integration tests may start containers (e.g. Testcontainers), which does not fit in 10 minutes.
+    timeout-minutes: ${{ inputs.enable-integration-tests && 20 || 10 }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -32,7 +43,15 @@ jobs:
             ${{ runner.os }}-maven-
 
       - name: Run Unit Tests
+        if: ${{ !inputs.enable-integration-tests }}
         run: mvn -B test -T 1C
+
+      # `verify` runs Surefire and Failsafe in one reactor pass, so the integration tests see the
+      # packaged artifacts of the upstream modules. Failsafe's `verify` goal is what fails the build
+      # on a failing IT — `mvn integration-test` alone would report the failure but exit green.
+      - name: Run Unit and Integration Tests
+        if: ${{ inputs.enable-integration-tests }}
+        run: mvn -B verify -T 1C
 
       - name: Run SonarQube Analysis
         env:

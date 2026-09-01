@@ -64,6 +64,11 @@ on:
         required: false
         default: true
         type: boolean
+      enable-integration-tests:
+        description: 'Run Maven integration tests (Failsafe `*IT` classes) with `mvn verify` instead of `mvn test`'
+        required: false
+        default: false
+        type: boolean
     secrets:
       SEMVER_PRIVATE_KEY:
         description: "GitHub App private key matching the semantic-release-app-id input, used for semantic-release authentication"
@@ -155,6 +160,8 @@ jobs:
     name: "."
     uses: ./.github/workflows/backend_unit_test_sonarqube.yml
     needs: [ checkstyle, gitleaks, owasp-dependency-check ]
+    with:
+      enable-integration-tests: ${{ inputs.enable-integration-tests }}
     secrets:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 

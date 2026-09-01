@@ -30,7 +30,7 @@ These are the entry points that chain all individual workflows together.
 
 | Workflow | Description |
 |---|---|
-| [`backend_unit_test_sonarqube.yml`](../.github/workflows/backend_unit_test_sonarqube.yml) | ✅ Runs Maven unit tests and SonarQube analysis with JaCoCo coverage reports |
+| [`backend_unit_test_sonarqube.yml`](../.github/workflows/backend_unit_test_sonarqube.yml) | ✅ Runs Maven unit tests and SonarQube analysis with JaCoCo coverage reports — optionally also the Failsafe integration tests (`enable-integration-tests`) |
 | [`frontend_unit_test_sonarqube.yml`](../.github/workflows/frontend_unit_test_sonarqube.yml) | ✅ Lints and runs unit tests on the Node frontend, then performs SonarQube analysis |
 | [`backend_checkstyle.yml`](../.github/workflows/backend_checkstyle.yml) | 🎨 Runs Maven Checkstyle to enforce code formatting and style rules on the Java backend |
 | [`check_single_commit.yml`](../.github/workflows/check_single_commit.yml) | 1️⃣ Fails the pipeline if a PR contains more than one commit, enforcing commit squashing before merge |
