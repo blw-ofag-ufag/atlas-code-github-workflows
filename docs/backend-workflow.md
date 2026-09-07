@@ -1,6 +1,6 @@
 # 📋 Backend Workflow
 
-The backend workflow (`backend_workflow.yml`) orchestrates the full CI/CD pipeline for Java/Maven backends. It chains the following steps: checkstyle, secret scanning, OWASP dependency check, unit tests & SonarQube analysis, Trivy vulnerability scan, semantic versioning, Docker image build & push to ECR, and infrastructure update.
+The backend workflow (`backend_workflow.yml`) orchestrates the full CI/CD pipeline for Java/Maven backends. It chains the following steps: checkstyle, secret scanning, OWASP dependency check, unit tests (optionally also integration tests) & SonarQube analysis, Trivy vulnerability scan, semantic versioning, Docker image build & push to ECR, and infrastructure update.
 
 ## 🛠️ Setup
 
@@ -173,6 +173,41 @@ Add the following project-specific properties to your `pom.xml`:
     <sonar.projectKey>blw-ofag-ufag_atlas-agate-test-backend</sonar.projectKey>
 </properties>
 ```
+
+---
+
+## 🧪 Integration Tests
+
+By default the pipeline runs `mvn -B test -T 1C`, which stops at the `test` phase — Failsafe never
+executes, so integration tests are skipped even when the plugin is configured. To run them, enable
+the input in your caller workflow:
+
+```yaml
+  backend-workflow:
+    uses: blw-ofag-ufag/atlas-code-github-workflows/.github/workflows/backend_workflow.yml@vX.Y.Z
+    with:
+      enable-integration-tests: true
+      # ... remaining inputs
+```
+
+The test job then runs `mvn -B verify -T 1C` instead, and the job timeout is raised from 10 to 20
+minutes. Things to know before enabling it:
+
+- 🏷️ **Naming**: Failsafe only picks up classes matching `*IT`, `IT*` or `*ITCase` — a class named
+  `FooTest` is a unit test and runs in Surefire.
+- ✅ **`verify`, not `integration-test`**: Failsafe's `integration-test` goal reports failures but
+  deliberately does not fail the build (so that `post-integration-test` teardown always runs). The
+  `verify` goal is what evaluates the result. Both goals are bound in the plugin snippet above.
+- 📦 **Packaging**: `verify` passes through `package`, so integration tests that need the built
+  artifacts (for example a Testcontainers test mounting provider JARs) get real JARs from the same
+  reactor pass. No separate `mvn install` step is needed.
+- 🔌 **Everything bound to `verify` now runs**: notably Checkstyle and — in multi-module projects — an
+  aggregated JaCoCo `report-aggregate`. If your `sonar.coverage.jacoco.xmlReportPaths` points at an
+  aggregated report bound to `verify`, that report is only produced with this input enabled.
+- 🐳 **Docker** is available on the `ubuntu-latest` runners, so Testcontainers-based tests work
+  without extra setup.
+- ⏭️ **Opting out locally**: `mvn verify -DskipITs` skips the integration tests without touching the
+  unit tests.
 
 ---
 
