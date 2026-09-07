@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/compare/v1.2.1...v1.3.0) (2026-09-07)
+
+
+### Features
+
+* add opt-in integration test run to the backend pipeline ([#32](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/issues/32)) ([882daba](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/commit/882dabad62d6a27364bac1f7c1454859bdfd9d3c))
+
 ## [1.2.1](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/compare/v1.2.0...v1.2.1) (2026-08-19)
 
 
