@@ -42,7 +42,6 @@ on:
         required: true
 
 jobs:
-  # todo push to versioned s3 path / dont invalidate cache / instead create PR on Infrastructure repo to update origin path or copy the directory
   build-push-s3:
     name: Build and push application to S3 bucket
     if: ${{ inputs.enable }}
@@ -112,15 +111,27 @@ jobs:
           role-chaining: true
           role-skip-session-tagging: true
 
-      - name: Deploy to S3 bucket
+      - name: Publish immutable release to S3
         env:
           VERSION: ${{ inputs.version }}
         run: |
           set -euo pipefail
 
-          echo "Deploying version: v${VERSION}"
+          echo "Publishing release: releases/v${VERSION}/"
 
-          aws s3 sync "dist/" "s3://${FRONTEND_S3_BUCKET}/" \
+          aws s3 sync "dist/" "s3://${FRONTEND_S3_BUCKET}/releases/v${VERSION}/" \
+            --region "$AWS_REGION" \
+            --delete
+
+      - name: Promote release to current/
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+
+          echo "Promoting v${VERSION} to current/"
+
+          aws s3 sync "s3://${FRONTEND_S3_BUCKET}/releases/v${VERSION}/" "s3://${FRONTEND_S3_BUCKET}/current/" \
             --region "$AWS_REGION" \
             --delete
 
