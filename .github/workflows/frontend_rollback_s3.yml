@@ -1,0 +1,98 @@
+name: "Frontend Rollback: re-points the current/ S3 prefix at an already-published releases/vX.Y.Z/ build and invalidates CloudFront, without checking out or rebuilding the app"
+run-name: "Rollback - ${{ inputs.environment }} - ${{ inputs.version }}"
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: "Version to roll back to. Must already exist at releases/v<version>/ in the target S3 bucket"
+        required: true
+        type: string
+      environment:
+        description: "Environment to roll back, used for selecting correct AWS credentials and CloudFront distribution based on environment specific secrets and variables"
+        required: true
+        type: string
+      aws-region:
+        description: "AWS region for the AWS CLI commands"
+        required: true
+        type: string
+      frontend-s3-bucket:
+        description: "S3 bucket name for frontend deployment"
+        required: true
+        type: string
+      cloudfront-distribution-id:
+        description: "CloudFront distribution ID for cache invalidation"
+        required: true
+        type: string
+    secrets:
+      AWS_OIDC_ROLE_ARN:
+        description: "OIDC role ARN for AWS credentials"
+        required: true
+      AWS_DEPLOYMENT_ROLE_ARN:
+        description: "Deployment role ARN for AWS credentials"
+        required: true
+
+jobs:
+  rollback:
+    name: Roll back current/ to an existing release
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    timeout-minutes: 5
+    env:
+      AWS_REGION: ${{ inputs.aws-region }}
+      FRONTEND_S3_BUCKET: ${{ inputs.frontend-s3-bucket }}
+      CLOUDFRONT_DISTRIBUTION_ID: ${{ inputs.cloudfront-distribution-id }}
+      VERSION: ${{ inputs.version }}
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Validate rollback inputs
+        run: |
+          set -euo pipefail
+
+          [[ "$VERSION" =~ ^[0-9]+(\.[0-9]+){2}([.-][0-9A-Za-z]+)*$ ]] || { echo "Invalid version"; exit 1; }
+          [[ "$AWS_REGION" =~ ^[a-z]{2}-[a-z]+-[0-9]+$ ]] || { echo "Invalid AWS region"; exit 1; }
+          [[ "$FRONTEND_S3_BUCKET" =~ ^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$ ]] || { echo "Invalid S3 bucket"; exit 1; }
+          [[ "$CLOUDFRONT_DISTRIBUTION_ID" =~ ^[A-Z0-9]{10,32}$ ]] || { echo "Invalid CloudFront distribution ID"; exit 1; }
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ secrets.AWS_OIDC_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Assume deployment role
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOYMENT_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+          role-chaining: true
+          role-skip-session-tagging: true
+
+      - name: Verify release exists
+        run: |
+          set -euo pipefail
+
+          aws s3 ls "s3://${FRONTEND_S3_BUCKET}/releases/v${VERSION}/" --region "$AWS_REGION" > /dev/null \
+            || { echo "No release found at releases/v${VERSION}/ - nothing to roll back to"; exit 1; }
+
+      - name: Promote release to current/
+        run: |
+          set -euo pipefail
+
+          echo "Rolling back current/ to v${VERSION}"
+
+          aws s3 sync "s3://${FRONTEND_S3_BUCKET}/releases/v${VERSION}/" "s3://${FRONTEND_S3_BUCKET}/current/" \
+            --region "$AWS_REGION" \
+            --delete
+
+      - name: Invalidate CloudFront cache
+        run: |
+          echo "Creating CloudFront invalidation for distribution: ${CLOUDFRONT_DISTRIBUTION_ID}"
+          aws cloudfront create-invalidation \
+            --distribution-id "$CLOUDFRONT_DISTRIBUTION_ID" \
+            --paths "/*"
+
+      - name: Display rollback result
+        run: |
+          echo "✅ Rollback complete! current/ now serves v${VERSION}"
