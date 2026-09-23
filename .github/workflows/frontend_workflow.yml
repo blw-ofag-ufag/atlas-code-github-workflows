@@ -25,19 +25,41 @@ on:
         description: "S3 bucket name for frontend deployment"
         required: true
         type: string
-      cloudfront-distribution-id:
-        description: "CloudFront distribution ID for cache invalidation"
-        required: true
-        type: string
       environment:
         description: "Deployment environment used to resolve secrets (e.g., dev, int)"
         required: true
         type: string
       enable-build-push:
-        description: 'Enable build and deploy to S3'
+        description: 'Enable build and publish to S3'
         required: false
         default: true
         type: boolean
+      enable-infrastructure-update:
+        description: 'Enable infrastructure update'
+        required: false
+        default: true
+        type: boolean
+      deployment-app-id:
+        description: "GitHub App ID used for deployment authentication, must have permissions to create PRs on the infrastructure repository"
+        required: true
+        type: string
+      application-name:
+        description: "Name of the application being deployed, used to identify the correct infrastructure as code variable to update in the infrastructure repository (updates <application-name>_version)"
+        required: true
+        type: string
+      github-organization:
+        description: 'GitHub organization that owns the infrastructure repository'
+        required: true
+        type: string
+      infrastructure_repo:
+        description: 'Name Infrastructure repository'
+        required: true
+        type: string
+      infrastructure_base_branch:
+        description: 'Base branch for PR'
+        required: false
+        default: 'main'
+        type: string
     secrets:
       SEMVER_PRIVATE_KEY:
         description: "GitHub App private key matching the app-id inputs"
@@ -56,6 +78,9 @@ on:
         required: true
       AWS_DEPLOYMENT_ROLE_ARN:
         description: "Deployment role ARN for AWS credentials"
+        required: true
+      DEPLOYMENT_APP_PRIVATE_KEY:
+        description: "GitHub App private key matching the deployment-app-id input, used for deployment authentication and creating PRs on the infrastructure repository"
         required: true
 
 jobs:
@@ -114,7 +139,23 @@ jobs:
       version: ${{needs.semantic-release.outputs.version }}
       aws-region: ${{ inputs.aws-region }}
       frontend-s3-bucket: ${{ inputs.frontend-s3-bucket }}
-      cloudfront-distribution-id: ${{ inputs.cloudfront-distribution-id }}
+
+  update-infrastructure:
+    name: Update Infrastructure
+    needs: [ semantic-release, build-and-push ]
+    if: needs.build-and-push.result == 'success'
+    uses: ./.github/workflows/update_infrastructure.yml
+    with:
+      enable: ${{ inputs.enable-infrastructure-update }}
+      image_tag: ${{ needs.semantic-release.outputs.version }}
+      application_name: ${{ inputs.application-name }}
+      infrastructure_repo: ${{ inputs.infrastructure_repo }}
+      tfvars_path: 'terraform/terraform.auto.tfvars.json'
+      base_branch: ${{ inputs.infrastructure_base_branch }}
+      app-id: ${{ inputs.deployment-app-id }}
+      github-organization: ${{ inputs.github-organization }}
+    secrets:
+      GH_APP_PRIVATE_KEY: ${{ secrets.DEPLOYMENT_APP_PRIVATE_KEY }}
 
   merge-main-develop:
     name: '.'
