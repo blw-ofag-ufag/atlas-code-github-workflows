@@ -115,7 +115,19 @@ jobs:
 
           aws s3 sync "dist/" "s3://${FRONTEND_S3_BUCKET}/releases/v${VERSION}/" \
             --region "$AWS_REGION" \
-            --delete
+            --delete \
+            --exclude "index.html" \
+            --exclude "assets/*" \
+            --cache-control "public, max-age=31536000, immutable"
+
+          aws s3 sync "dist/assets/" "s3://${FRONTEND_S3_BUCKET}/releases/v${VERSION}/assets/" \
+            --region "$AWS_REGION" \
+            --delete \
+            --cache-control "no-cache"
+
+          aws s3 cp "dist/index.html" "s3://${FRONTEND_S3_BUCKET}/releases/v${VERSION}/index.html" \
+            --region "$AWS_REGION" \
+            --cache-control "no-cache"
 
       - name: Display release info
         env:
