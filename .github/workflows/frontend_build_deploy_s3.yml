@@ -1,21 +1,21 @@
-name: Frontend Build and Deploy to S3 and invalidate CloudFront Cache
-run-name: Build and Deploy - ${{ inputs.environment }} - ${{ inputs.version }}
+name: Frontend Build and Publish Versioned Release to S3
+run-name: Publish Release - ${{ inputs.environment }} - ${{ inputs.version }}
 on:
   workflow_call:
     inputs:
       enable:
-        description: 'Enable build and deploy'
+        description: 'Enable build and publish'
         required: false
         default: true
         type: boolean
       version:
         required: true
         type: string
-        description: "Version of the application being deployed, used for versioned S3 paths and cache invalidation"
+        description: "Version of the application being published, used for the versioned S3 release path"
       environment:
         type: string
         required: true
-        description: "environment to deploy to, used for selecting correct AWS credentials and CloudFront distribution based on environment specific secrets and variables"
+        description: "environment to deploy to, used for selecting correct AWS credentials based on environment specific secrets and variables"
       aws-region:
         type: string
         required: true
@@ -24,10 +24,6 @@ on:
         type: string
         required: true
         description: "S3 bucket name for frontend deployment"
-      cloudfront-distribution-id:
-        type: string
-        required: true
-        description: "CloudFront distribution ID for cache invalidation"
       build-configuration:
         type: string
         required: false
@@ -42,9 +38,8 @@ on:
         required: true
 
 jobs:
-  # todo push to versioned s3 path / dont invalidate cache / instead create PR on Infrastructure repo to update origin path or copy the directory
   build-push-s3:
-    name: Build and push application to S3 bucket
+    name: Build and publish release to S3 bucket
     if: ${{ inputs.enable }}
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
@@ -52,7 +47,6 @@ jobs:
     env:
       AWS_REGION: ${{ inputs.aws-region }}
       FRONTEND_S3_BUCKET: ${{ inputs.frontend-s3-bucket }}
-      CLOUDFRONT_DISTRIBUTION_ID: ${{ inputs.cloudfront-distribution-id }}
 
     permissions:
       id-token: write
@@ -96,7 +90,6 @@ jobs:
           [[ "$VERSION" =~ ^[0-9]+(\.[0-9]+){2}([.-][0-9A-Za-z]+)*$ ]] || { echo "Invalid version"; exit 1; }
           [[ "$AWS_REGION" =~ ^[a-z]{2}-[a-z]+-[0-9]+$ ]] || { echo "Invalid AWS region"; exit 1; }
           [[ "$FRONTEND_S3_BUCKET" =~ ^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$ ]] || { echo "Invalid S3 bucket"; exit 1; }
-          [[ "$CLOUDFRONT_DISTRIBUTION_ID" =~ ^[A-Z0-9]{10,32}$ ]] || { echo "Invalid CloudFront distribution ID"; exit 1; }
 
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v6
@@ -112,26 +105,33 @@ jobs:
           role-chaining: true
           role-skip-session-tagging: true
 
-      - name: Deploy to S3 bucket
+      - name: Publish immutable release to S3
         env:
           VERSION: ${{ inputs.version }}
         run: |
           set -euo pipefail
 
-          echo "Deploying version: v${VERSION}"
+          echo "Publishing release: releases/v${VERSION}/"
 
-          aws s3 sync "dist/" "s3://${FRONTEND_S3_BUCKET}/" \
+          aws s3 sync "dist/" "s3://${FRONTEND_S3_BUCKET}/releases/v${VERSION}/" \
             --region "$AWS_REGION" \
-            --delete
+            --delete \
+            --exclude "index.html" \
+            --exclude "assets/*" \
+            --cache-control "public, max-age=31536000, immutable"
 
-      - name: Invalidate CloudFront cache
-        run: |
-          echo "Creating CloudFront invalidation for distribution: ${CLOUDFRONT_DISTRIBUTION_ID}"
-          aws cloudfront create-invalidation \
-            --distribution-id "$CLOUDFRONT_DISTRIBUTION_ID" \
-            --paths "/*"
+          aws s3 sync "dist/assets/" "s3://${FRONTEND_S3_BUCKET}/releases/v${VERSION}/assets/" \
+            --region "$AWS_REGION" \
+            --delete \
+            --cache-control "no-cache"
 
-      - name: Display deployment URL
+          aws s3 cp "dist/index.html" "s3://${FRONTEND_S3_BUCKET}/releases/v${VERSION}/index.html" \
+            --region "$AWS_REGION" \
+            --cache-control "no-cache"
+
+      - name: Display release info
+        env:
+          VERSION: ${{ inputs.version }}
         run: |
-          echo "✅ Deployment complete!"
-          echo "🌐 Your application is available at: https://www.blw-agate-dev.pc-core.isceco.admin.ch"
+          echo "✅ Release v${VERSION} published to releases/v${VERSION}/"
+          echo "ℹ️  This release is not yet live. It goes live once the infrastructure PR bumping the version is merged."
