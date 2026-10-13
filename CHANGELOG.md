@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.4.0](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/compare/v1.3.0...v1.4.0) (2026-10-13)
+
+
+### Features
+
+* publish versioned S3 releases and promote to current ([f8c27a4](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/commit/f8c27a4f364ea5d3bfbdd73da49d0bbe49266d39))
+* set cache-control per release asset type to avoid CloudFront invalidation ([04de9c8](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/commit/04de9c8f9baaa45cfad4950f919f4cb81ec14406))
+
 ## [1.3.0](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/compare/v1.2.1...v1.3.0) (2026-09-07)
 
 
