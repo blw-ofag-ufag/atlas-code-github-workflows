@@ -1,6 +1,9 @@
 # 🎨 Frontend Workflow
 
-The frontend workflow (`frontend_workflow.yml`) orchestrates the full CI/CD pipeline for Node/pnpm-based frontends. It chains the following steps: secret scanning, npm audit, Trivy vulnerability scan, unit tests & SonarQube analysis, semantic versioning, S3 deployment, and a main→develop merge.
+The frontend workflow (`frontend_workflow.yml`) orchestrates the full CI/CD pipeline for Node/pnpm-based frontends. It chains the following steps: secret scanning, npm audit, Trivy vulnerability scan, unit tests & SonarQube analysis, semantic versioning, publishing a versioned release to S3, opening a PR against the infrastructure repository to bump the deployed version, and a main→develop merge.
+
+> [!NOTE]
+> Releases are published to an immutable `releases/v<version>/` path in the S3 bucket — the workflow no longer writes to the bucket root or invalidates a CloudFront cache. The release only goes live once the generated infrastructure PR (which updates `<application-name>_version` in `terraform.auto.tfvars.json`) is reviewed and merged, which re-applies Terraform with the new `origin_path`.
 
 ## 🛠️ Setup
 
@@ -13,6 +16,10 @@ The frontend workflow (`frontend_workflow.yml`) orchestrates the full CI/CD pipe
    - **Actions:** Read & Write
    - **Contents:** Read & Write
    - **Issues:** Read & Write
+   - **Metadata:** Read-only
+7. 🤖 Create (or reuse) a GitHub App for the infrastructure update, installed on the target infrastructure repository, with the following permissions:
+   - **Contents:** Read & Write
+   - **Pull requests:** Read & Write
    - **Metadata:** Read-only
 
 ---
@@ -33,8 +40,9 @@ The frontend workflow (`frontend_workflow.yml`) orchestrates the full CI/CD pipe
 
 | Variable | Example | Description |
 |---|---|---|
-| `CLOUDFRONT_DISTRIBUTION_ID` | `E2D4KHJF4Q9SX2` | CloudFront distribution ID to invalidate after deployment |
-| `FRONTEND_S3_BUCKET` | `agate-frontend-681832766879` | S3 bucket where the frontend is deployed |
+| `FRONTEND_S3_BUCKET` | `agate-frontend-681832766879` | S3 bucket where the frontend release is published |
+| `INFRASTRUCTURE_REPO` | `pc-core-blw-agate-dev` | Name of the infrastructure repository to open the version-bump PR against |
+| `DEPLOYMENT_APP_ID` | `123456` | App ID of the GitHub App used to authenticate against the infrastructure repository |
 
 #### 🔐 Environment-specific Secrets
 
@@ -42,12 +50,29 @@ The frontend workflow (`frontend_workflow.yml`) orchestrates the full CI/CD pipe
 |---|---|---|
 | `AWS_DEPLOYMENT_ROLE_ARN` | `arn:aws:iam::xxxxx:role/agate-frontend-deployment-role` | ARN of the IAM Role for deployment (created in Terraform) |
 | `AWS_OIDC_ROLE_ARN` | `arn:aws:iam::xxxxx:role/agate-frontend-github-oidc-role` | ARN of the IAM Role for OIDC authentication (created in Terraform) |
+| `DEPLOYMENT_APP_PRIVATE_KEY` | — | Private key of the infrastructure-update GitHub App (matching `DEPLOYMENT_APP_ID`) |
+
+> [!NOTE]
+> `CLOUDFRONT_DISTRIBUTION_ID` is no longer used — the workflow stopped invalidating CloudFront caches in favor of the versioned-release + infra-PR flow. Remove it from existing environments.
 
 #### 🤖 Required GitHub Apps
 
 - `ATLAS-AGATE-TEST-FRONTEND-SEMVER` (or equivalent)
+- A deployment app installed on the infrastructure repository (see setup step 7), referenced by `DEPLOYMENT_APP_ID` / `DEPLOYMENT_APP_PRIVATE_KEY`
 - `GH-ORG-GITLEAKS`
 - `SonarQubeCloud`
+
+#### ⚙️ Caller Workflow Inputs
+
+In addition to the variables/secrets above, the calling workflow must pass these literal `with:` inputs when invoking `frontend_workflow.yml`:
+
+| Input | Example | Description |
+|---|---|---|
+| `deployment-app-id` | `${{ vars.DEPLOYMENT_APP_ID }}` | App ID of the infrastructure deployment GitHub App |
+| `application-name` | `agate_frontend` | Must match the `<application-name>_version` variable already present in the infrastructure repository's `terraform.auto.tfvars.json` |
+| `github-organization` | `blw-ofag-ufag` | Organization that owns the infrastructure repository |
+| `infrastructure_repo` | `${{ vars.INFRASTRUCTURE_REPO }}` | Name of the infrastructure repository |
+| `infrastructure_base_branch` | `main` | Base branch for the generated infrastructure PR (optional, defaults to `main`) |
 
 #### 🏢 Organization Secrets
 
