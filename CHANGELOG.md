@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.0](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/compare/v1.4.0...v1.5.0) (2026-10-19)
+
+
+### Features
+
+* pin runners to ubuntu-26.04 instead of ubuntu-latest ([#37](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/issues/37)) ([a1074a8](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/commit/a1074a8028840b541a0f563928a6ce47c2771ac0))
+
 ## [1.4.0](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/compare/v1.3.0...v1.4.0) (2026-10-13)
 
 
