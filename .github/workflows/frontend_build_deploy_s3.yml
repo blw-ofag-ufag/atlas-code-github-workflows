@@ -41,7 +41,7 @@ jobs:
   build-push-s3:
     name: Build and publish release to S3 bucket
     if: ${{ inputs.enable }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     environment: ${{ inputs.environment }}
     timeout-minutes: 5
     env:

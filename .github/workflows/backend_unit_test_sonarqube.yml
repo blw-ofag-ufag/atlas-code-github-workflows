@@ -19,7 +19,7 @@ on:
 jobs:
   unit-test-sonarqube:
     name: Unit Tests and SonarQube
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     # Integration tests may start containers (e.g. Testcontainers), which does not fit in 10 minutes.
     timeout-minutes: ${{ inputs.enable-integration-tests && 20 || 10 }}
     steps:

@@ -6,7 +6,7 @@ on:
 jobs:
   check-single-commit:
     name: Check Single Commit
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 5
     steps:
       - name: Check number of commits in PR

@@ -204,7 +204,7 @@ minutes. Things to know before enabling it:
 - 🔌 **Everything bound to `verify` now runs**: notably Checkstyle and — in multi-module projects — an
   aggregated JaCoCo `report-aggregate`. If your `sonar.coverage.jacoco.xmlReportPaths` points at an
   aggregated report bound to `verify`, that report is only produced with this input enabled.
-- 🐳 **Docker** is available on the `ubuntu-latest` runners, so Testcontainers-based tests work
+- 🐳 **Docker** is available on the `ubuntu-26.04` runners, so Testcontainers-based tests work
   without extra setup.
 - ⏭️ **Opting out locally**: `mvn verify -DskipITs` skips the integration tests without touching the
   unit tests.

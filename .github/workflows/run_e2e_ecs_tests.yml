@@ -45,7 +45,7 @@ on:
 jobs:
   run-ecs-task:
     name: "Trigger ECS e2e task"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     environment: ${{ inputs.environment }}
     steps:
       - name: Configure AWS credentials
