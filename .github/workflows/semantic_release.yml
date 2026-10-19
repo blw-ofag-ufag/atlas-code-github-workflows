@@ -23,7 +23,7 @@ on:
 jobs:
   semantic-release:
     name: Semantic Release
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 15
     outputs:
       version: ${{ steps.semantic-release.outputs.version }}

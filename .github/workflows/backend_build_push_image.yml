@@ -49,7 +49,7 @@ jobs:
   # Validate secrets to match an expected regex pattern to facilitate debugging of misconfigured secrets.
   validate-secret-values:
     if: ${{ inputs.enable }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     environment:  ${{ inputs.environment }}
     steps:
       - name: Validate secret values
@@ -71,7 +71,7 @@ jobs:
     name: "Build and push docker image to ECR  ${{ inputs.environment }} - ${{ inputs.version }}"
     if: ${{ inputs.enable }}
     needs: validate-secret-values
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     environment: ${{ inputs.environment }}
     timeout-minutes: 15
     outputs:

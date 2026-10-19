@@ -97,7 +97,7 @@ on:
 jobs:
   set-flags-from-commit:
     name: Set flags from commit message
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     outputs:
       enable-owasp-check: ${{ steps.set-flags.outputs.enable_owasp_check }}
       enable-build-push: ${{ steps.set-flags.outputs.enable_build_push }}

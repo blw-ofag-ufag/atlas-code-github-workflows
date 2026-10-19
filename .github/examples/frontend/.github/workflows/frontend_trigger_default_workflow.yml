@@ -16,7 +16,7 @@ on:
 jobs:
   # maps the branch to an environment and sets it as output for the rest of the workflow
   set-env:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     outputs:
       environment: ${{ steps.map-branch-to-env.outputs.environment }}
 
@@ -32,7 +32,7 @@ jobs:
             echo "unable to set environment for ref ${GITHUB_REF}"
           fi
   resolve-env-vars:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     needs: set-env
     environment:  ${{ needs.set-env.outputs.environment }}
     outputs:
