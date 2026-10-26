@@ -114,7 +114,7 @@ jobs:
       enable-build-push: ${{ steps.set-flags.outputs.enable_build_push }}
       enable-infrastructure-update: ${{ steps.set-flags.outputs.enable_infrastructure_update }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v6.1.0
         with:
           fetch-depth: 0
       - name: Set flags
