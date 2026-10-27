@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.0](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/compare/v1.5.0...v1.6.0) (2026-10-27)
+
+
+### Features
+
+* pin external actions to full versions instead of major tags ([#39](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/issues/39)) ([0a2a944](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/commit/0a2a944581d4ac85a458a85902eae9a58e0a54f0))
+
 ## [1.5.0](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/compare/v1.4.0...v1.5.0) (2026-10-19)
 
 
