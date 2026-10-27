@@ -30,16 +30,16 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v6.1.0
         with:
           fetch-depth: 0
           persist-credentials: false
 
       - name: Set up pnpm
-        uses: pnpm/action-setup@v5
+        uses: pnpm/action-setup@v5.0.0
 
       - name: Set up Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v6.5.0
         with:
           node-version: 24
           cache: pnpm
@@ -48,7 +48,7 @@ jobs:
       - name: pnpm install
         run: pnpm install --frozen-lockfile --ignore-scripts
 
-      - uses: actions/create-github-app-token@v3
+      - uses: actions/create-github-app-token@v3.3.0
         id: app-token
         env:
           SEMVER_APP_ID: ${{ inputs.app-id }}

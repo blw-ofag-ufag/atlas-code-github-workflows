@@ -19,18 +19,18 @@ jobs:
     timeout-minutes: 100
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v6.1.0
         with:
           fetch-depth: 0
 
       - name: Set up JDK 25
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v5.7.0
         with:
           java-version: '25'
           distribution: 'corretto'
 
       - name: Restore Maven Cache
-        uses: actions/cache/restore@v5
+        uses: actions/cache/restore@v5.1.0
         with:
           path: ~/.m2/repository
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
@@ -48,7 +48,7 @@ jobs:
 
       - name: Restore Dependency-Check Cache
         if: inputs.enable
-        uses: actions/cache/restore@v5
+        uses: actions/cache/restore@v5.1.0
         with:
           path: ${{ github.workspace }}/.dependency-check
           key: ${{ runner.os }}-dependency-check-${{ steps.get-cache-date.outputs.date }}
@@ -67,14 +67,14 @@ jobs:
             -DyarnAuditAnalyzerEnabled=false
 
       - name: Save Dependency-Check Cache
-        uses: actions/cache/save@v5
+        uses: actions/cache/save@v5.1.0
         if: inputs.enable
         with:
           path: ${{ github.workspace }}/.dependency-check
           key: ${{ runner.os }}-dependency-check-${{ steps.get-cache-date.outputs.date }}
 
       - name: Save Maven Cache
-        uses: actions/cache/save@v5
+        uses: actions/cache/save@v5.1.0
         if: success()
         with:
           path: ~/.m2/repository

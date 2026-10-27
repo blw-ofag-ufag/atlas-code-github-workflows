@@ -98,17 +98,17 @@ jobs:
           echo "VERSION=$VERSION" >> "$GITHUB_ENV"
           [[ "${{ secrets.AWS_DEPLOYMENT_ROLE_ARN }}" =~ ^arn:aws:iam::[0-9]{12}:role\/[A-Za-z0-9+=,.@_-]+$ ]] || { echo "Invalid AWS_DEPLOYMENT_ROLE_ARN, does not match pattern ^arn:aws:iam::\d+:role\/[\w-]+$"; exit 1; }
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v6.1.0
         with:
           ref: ${{ format('v{0}', inputs.version) }}
 
       - name: Set up pnpm
         if: ${{ inputs.enable-pnpm-build }}
-        uses: pnpm/action-setup@v5
+        uses: pnpm/action-setup@v5.0.0
 
       - name: Set up Node.js
         if: ${{ inputs.enable-pnpm-build }}
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v6.5.0
         with:
           node-version: 24
           cache: pnpm
@@ -124,14 +124,14 @@ jobs:
 
       - name: Set up JDK
         if: ${{ inputs.enable-maven-build }}
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v5.7.0
         with:
           java-version: '25'
           distribution: 'corretto'
 
       - name: Restore Maven Cache
         if: ${{ inputs.enable-maven-build }}
-        uses: actions/cache/restore@v5
+        uses: actions/cache/restore@v5.1.0
         with:
           path: ~/.m2/repository
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
@@ -146,24 +146,24 @@ jobs:
         run: echo "IMAGE_TAG=${VERSION}" >> $GITHUB_ENV
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v6
+        uses: aws-actions/configure-aws-credentials@v6.3.0
         with:
           role-to-assume: ${{ secrets.AWS_DEPLOYMENT_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Login to AWS ECR
         id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
+        uses: aws-actions/amazon-ecr-login@v2.1.7
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v4
+        uses: docker/setup-qemu-action@v4.4.0
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
+        uses: docker/setup-buildx-action@v4.4.1
 
       - name: Generate Docker metadata
         id: meta
-        uses: docker/metadata-action@v6
+        uses: docker/metadata-action@v6.2.0
         with:
           images: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}
           tags: |
@@ -172,7 +172,7 @@ jobs:
 
       - name: Build and push to ECR
         id: build
-        uses: docker/build-push-action@v7
+        uses: docker/build-push-action@v7.4.0
         with:
           context: .
           file: ./Dockerfile

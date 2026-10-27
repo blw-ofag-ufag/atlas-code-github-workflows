@@ -41,7 +41,7 @@ jobs:
   release-please:
     runs-on: ubuntu-26.04
     steps:
-      - uses: actions/create-github-app-token@v3
+      - uses: actions/create-github-app-token@v3.3.0
         id: app-token
         env:
           GH_ORG_APP_ID: ${{ inputs.app-id }}
@@ -52,7 +52,7 @@ jobs:
 
       - name: Release Please
         id: rp
-        uses: googleapis/release-please-action@v4
+        uses: googleapis/release-please-action@v4.4.1
         with:
           # Use provided token if present, otherwise default to GITHUB_TOKEN
           token: ${{ steps.app-token.outputs.token }}
