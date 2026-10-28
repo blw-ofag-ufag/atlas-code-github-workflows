@@ -53,8 +53,6 @@ jobs:
           cache-dependency-path: pnpm-lock.yaml
 
       - name: Configure GitHub Packages token
-        # GitHub Packages needs a token even for reading (private @blw-ofag-ufag/* packages such as atlas-ui).
-        # Same as a developer's user .npmrc; the scope registry itself comes from the app's .npmrc.
         env:
           NPM_REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: echo "//npm.pkg.github.com/:_authToken=${NPM_REGISTRY_TOKEN}" >> ~/.npmrc
