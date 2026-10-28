@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.0](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/compare/v1.6.0...v1.7.0) (2026-10-28)
+
+
+### Features
+
+* allow private GitHub Packages dependencies in pnpm install ([#41](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/issues/41)) ([307a961](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/commit/307a961e0e7807b4a72a31c8e0cf27de21c36f16))
+
 ## [1.6.0](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/compare/v1.5.0...v1.6.0) (2026-10-27)
 
 
