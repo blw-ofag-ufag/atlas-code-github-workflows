@@ -5,6 +5,9 @@ permissions:
   pull-requests: write
   id-token: write
   issues: write
+  # read access to private GitHub Packages dependencies (e.g. @blw-ofag-ufag/atlas-ui); a reusable workflow
+  # never gets more permissions than its caller
+  packages: read
 
 on:
   pull_request:
