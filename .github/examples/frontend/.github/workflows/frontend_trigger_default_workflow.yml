@@ -5,6 +5,7 @@ permissions:
   pull-requests: write
   id-token: write
   issues: write
+  packages: read
 
 on:
   pull_request:
@@ -34,7 +35,7 @@ jobs:
   resolve-env-vars:
     runs-on: ubuntu-26.04
     needs: set-env
-    environment:  ${{ needs.set-env.outputs.environment }}
+    environment: ${{ needs.set-env.outputs.environment }}
     outputs:
       frontend_s3_bucket: ${{ steps.out.outputs.frontend_s3_bucket }}
       infrastructure_repo: ${{ steps.out.outputs.infrastructure_repo }}
@@ -49,7 +50,7 @@ jobs:
           echo "infrastructure_repo=${{ vars.INFRASTRUCTURE_REPO }}" >> "$GITHUB_OUTPUT"
 
   frontend-workflow:
-    name: '.'
+    name: "."
     uses: blw-ofag-ufag/atlas-code-github-workflows/.github/workflows/frontend_workflow.yml@v1.0.0
     needs: [set-env, resolve-env-vars]
     secrets:

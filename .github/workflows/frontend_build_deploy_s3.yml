@@ -4,7 +4,7 @@ on:
   workflow_call:
     inputs:
       enable:
-        description: 'Enable build and publish'
+        description: "Enable build and publish"
         required: false
         default: true
         type: boolean
@@ -51,6 +51,7 @@ jobs:
     permissions:
       id-token: write
       contents: read
+      packages: read
     steps:
       - name: Print GitHub Context Safely
         run: |
@@ -73,6 +74,11 @@ jobs:
           node-version: 24
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
+
+      - name: Configure GitHub Packages token
+        env:
+          NPM_REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: echo "//npm.pkg.github.com/:_authToken=${NPM_REGISTRY_TOKEN}" >> ~/.npmrc
 
       - name: pnpm install
         run: pnpm install --frozen-lockfile --ignore-scripts

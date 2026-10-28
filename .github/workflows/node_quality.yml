@@ -2,6 +2,7 @@ name: Node quality
 run-name: Node quality
 permissions:
   contents: read
+  packages: read
 
 on:
   workflow_call:
@@ -32,6 +33,11 @@ jobs:
           node-version: ${{ inputs.node-version }}
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
+
+      - name: Configure GitHub Packages token
+        env:
+          NPM_REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: echo "//npm.pkg.github.com/:_authToken=${NPM_REGISTRY_TOKEN}" >> ~/.npmrc
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --ignore-scripts

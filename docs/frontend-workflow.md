@@ -21,6 +21,7 @@ The frontend workflow (`frontend_workflow.yml`) orchestrates the full CI/CD pipe
    - **Contents:** Read & Write
    - **Pull requests:** Read & Write
    - **Metadata:** Read-only
+8. 📦 Only if the app uses private packages from GitHub Packages (e.g. `@blw-ofag-ufag/atlas-ui`): see [Private GitHub Packages dependencies](#-private-github-packages-dependencies).
 
 ---
 
@@ -84,6 +85,20 @@ In addition to the variables/secrets above, the calling workflow must pass these
 
 - `AWS_REGION`
 - `GH_ORG_GITLEAKS_APP_ID`
+
+---
+
+## 📦 Private GitHub Packages dependencies
+
+GitHub Packages needs a token even for reading, so `pnpm install` in the pipeline cannot download private `@blw-ofag-ufag/*` packages without one. Every workflow that installs dependencies (`node_sonarqube`, `node_quality`, `semantic_release`, `frontend_build_deploy_s3`) writes the workflow's `GITHUB_TOKEN` into the runner's `~/.npmrc` before `pnpm install` (like the token a developer keeps in their user `.npmrc`). For the app this means:
+
+1. 🗂️ Route the scope to GitHub Packages in the repository's `.npmrc` (no token in the repository):
+   ```
+   @blw-ofag-ufag:registry=https://npm.pkg.github.com
+   ```
+2. 🔐 Add `packages: read` to the `permissions` of the calling workflow (see `.github/examples/frontend`). A reusable workflow never gets more permissions than its caller, so without it the install step has no read access.
+3. ✅ In the package settings (organisation → Packages → the package → **Package settings** → **Manage Actions access**) add the repository with the **Read** role.
+4. ⏱️ pnpm 11 holds back freshly published versions for a day (`minimumReleaseAge`). Apps either wait or list the package in `minimumReleaseAgeExclude` in `pnpm-workspace.yaml`.
 
 ---
 
