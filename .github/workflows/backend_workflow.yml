@@ -69,6 +69,15 @@ on:
         required: false
         default: false
         type: boolean
+      # Optional ECR pull role for tests that run a container image from a private ECR repo (e.g. the
+      # custom Keycloak Dev Services testcontainer, A1A-312). Assumed directly, without role chaining,
+      # per ADR-1005 (a deliberate exception to the OIDC-role-chaining rule, so pull_request runs that
+      # have no GitHub environment can still pull). No-op for callers that leave it empty.
+      keycloak-ecr-pull-role-arn:
+        description: 'ARN of a GitHub-OIDC role (assumed directly, no role chaining — ADR-1005) that grants read-only pull on the private ECR repo holding a test container image. When set, the unit-test job logs in to ECR before running the tests. Empty = disabled.'
+        required: false
+        default: ''
+        type: string
     secrets:
       SEMVER_PRIVATE_KEY:
         description: "GitHub App private key matching the semantic-release-app-id input, used for semantic-release authentication"
@@ -162,6 +171,10 @@ jobs:
     needs: [ checkstyle, gitleaks, owasp-dependency-check ]
     with:
       enable-integration-tests: ${{ inputs.enable-integration-tests }}
+      # Passed through so the test job can pull a private-ECR test container (A1A-312, ADR-1005).
+      # Empty for callers that don't set it, which keeps the ECR-login step a no-op.
+      keycloak-ecr-pull-role-arn: ${{ inputs.keycloak-ecr-pull-role-arn }}
+      aws-region: ${{ inputs.aws-region }}
     secrets:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 

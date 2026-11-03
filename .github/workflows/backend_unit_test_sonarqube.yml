@@ -12,6 +12,21 @@ on:
         required: false
         default: false
         type: boolean
+      keycloak-ecr-pull-role-arn:
+        description: >-
+          Optional ARN of a GitHub-OIDC role that grants read-only pull on a private ECR repo holding
+          a test container image (e.g. the custom Keycloak Dev Services testcontainer, A1A-312). When
+          set, the job assumes it **directly** (no role chaining — ADR-1005, so pull_request runs that
+          have no GitHub environment can still pull) and logs in to ECR before running the tests.
+          Empty = no ECR login (default), which keeps this a no-op for callers that don't need it.
+        required: false
+        default: ''
+        type: string
+      aws-region:
+        description: "AWS region for the ECR login; only used when keycloak-ecr-pull-role-arn is set."
+        required: false
+        default: ''
+        type: string
     secrets:
       SONAR_TOKEN:
         description: "SonarQube authentication token"
@@ -20,6 +35,10 @@ jobs:
   unit-test-sonarqube:
     name: Unit Tests and SonarQube
     runs-on: ubuntu-26.04
+    # OIDC token is needed only when an ECR pull role is passed; harmless otherwise.
+    permissions:
+      id-token: write
+      contents: read
     # Integration tests may start containers (e.g. Testcontainers), which does not fit in 10 minutes.
     timeout-minutes: ${{ inputs.enable-integration-tests && 20 || 10 }}
     steps:
@@ -33,6 +52,19 @@ jobs:
         with:
           java-version: '25'
           distribution: 'corretto'
+
+      # ADR-1005: assume the pull role directly (no role chaining) so pull_request runs can pull the
+      # private-ECR test container. Runs only when the caller passes a role ARN (A1A-312).
+      - name: Configure AWS credentials for ECR pull
+        if: ${{ inputs.keycloak-ecr-pull-role-arn != '' }}
+        uses: aws-actions/configure-aws-credentials@v6.3.0
+        with:
+          role-to-assume: ${{ inputs.keycloak-ecr-pull-role-arn }}
+          aws-region: ${{ inputs.aws-region }}
+
+      - name: Login to AWS ECR
+        if: ${{ inputs.keycloak-ecr-pull-role-arn != '' }}
+        uses: aws-actions/amazon-ecr-login@v2.1.7
 
       - name: Restore Maven Cache
         uses: actions/cache/restore@v5.1.0
