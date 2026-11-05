@@ -211,6 +211,33 @@ minutes. Things to know before enabling it:
 
 ---
 
+## 🐳 Private ECR Images in Tests
+
+If the tests start a container from a private ECR image (for example a Quarkus Dev Service with a
+custom Keycloak image), pass the ARN of a pull role:
+
+```yaml
+  backend-workflow:
+    uses: blw-ofag-ufag/atlas-code-github-workflows/.github/workflows/backend_workflow.yml@vX.Y.Z
+    with:
+      ecr-pull-role-arn: "arn:aws:iam::<account-id>:role/<pull-role>"
+      # ... remaining inputs (aws-region is reused for the ECR login)
+```
+
+The test job then assumes that role via GitHub OIDC and logs in to ECR before Maven runs. Empty
+(the default) skips both steps, so other callers are unaffected.
+
+- 🔓 **Not a secret, no environment**: the ARN is passed literally in the caller. Environment
+  secrets are not available on pull requests, so the tests could not pull there otherwise.
+- ⛓️ **No role chaining**: the pull role is assumed directly. Both are a documented exception to
+  the role-chaining and per-environment-secret rules (ADR-1005); give the role read access to the
+  required ECR repositories only.
+- 🔑 **Caller permissions**: the caller must grant `id-token: write` (already needed for the
+  deployment) and `packages: read`, because a reusable workflow cannot get more than the caller
+  grants.
+
+---
+
 ## 🎨 Checkstyle
 
 Add the following plugin to your `pom.xml`:

@@ -12,6 +12,19 @@ on:
         required: false
         default: false
         type: boolean
+      ecr-pull-role-arn:
+        description: >-
+          ARN of an AWS role the tests assume via GitHub OIDC to pull private images from ECR (e.g. a
+          Keycloak Dev Service image). Not a secret: it is passed literally, so the login also works on
+          pull requests. Empty (default) skips the AWS and ECR login.
+        required: false
+        default: ''
+        type: string
+      aws-region:
+        description: "AWS region of the ECR registry; required when ecr-pull-role-arn is set"
+        required: false
+        default: ''
+        type: string
     secrets:
       SONAR_TOKEN:
         description: "SonarQube authentication token"
@@ -22,6 +35,10 @@ jobs:
     runs-on: ubuntu-26.04
     # Integration tests may start containers (e.g. Testcontainers), which does not fit in 10 minutes.
     timeout-minutes: ${{ inputs.enable-integration-tests && 20 || 10 }}
+    permissions:
+      contents: read
+      id-token: write
+      packages: read
     steps:
       - name: Checkout
         uses: actions/checkout@v6.1.0
@@ -33,6 +50,19 @@ jobs:
         with:
           java-version: '25'
           distribution: 'corretto'
+
+      # The pull role is assumed directly, without role chaining, and its ARN is a plain input rather
+      # than an environment secret, so pull-request runs can pull too (ADR-1005, exception to EK-003).
+      - name: Configure AWS credentials for the ECR pull
+        if: ${{ inputs.ecr-pull-role-arn != '' }}
+        uses: aws-actions/configure-aws-credentials@v6.3.0
+        with:
+          role-to-assume: ${{ inputs.ecr-pull-role-arn }}
+          aws-region: ${{ inputs.aws-region }}
+
+      - name: Login to AWS ECR
+        if: ${{ inputs.ecr-pull-role-arn != '' }}
+        uses: aws-actions/amazon-ecr-login@v2.1.7
 
       - name: Restore Maven Cache
         uses: actions/cache/restore@v5.1.0

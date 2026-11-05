@@ -70,6 +70,11 @@ on:
         required: false
         default: false
         type: boolean
+      ecr-pull-role-arn:
+        description: 'ARN of the AWS role the unit tests assume to pull private ECR images (ADR-1005); empty skips the ECR login'
+        required: false
+        default: ''
+        type: string
     secrets:
       SEMVER_PRIVATE_KEY:
         description: "GitHub App private key matching the semantic-release-app-id input, used for semantic-release authentication"
@@ -163,6 +168,8 @@ jobs:
     needs: [ checkstyle, gitleaks, owasp-dependency-check ]
     with:
       enable-integration-tests: ${{ inputs.enable-integration-tests }}
+      ecr-pull-role-arn: ${{ inputs.ecr-pull-role-arn }}
+      aws-region: ${{ inputs.aws-region }}
     secrets:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
