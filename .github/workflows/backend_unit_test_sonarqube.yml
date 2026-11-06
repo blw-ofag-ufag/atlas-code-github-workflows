@@ -50,8 +50,7 @@ jobs:
           java-version: '25'
           distribution: 'corretto'
 
-      # The pull role is assumed directly, without role chaining, and its ARN is a plain input rather
-      # than an environment secret, so pull-request runs can pull too (ADR-1005, exception to EK-003).
+      # Assumed directly, without role chaining (ADR-1005).
       - name: Configure AWS credentials for the ECR pull
         if: ${{ inputs.ecr-pull-role-arn != '' }}
         uses: aws-actions/configure-aws-credentials@v6.3.0

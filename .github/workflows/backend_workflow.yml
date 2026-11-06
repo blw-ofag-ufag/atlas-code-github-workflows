@@ -71,7 +71,7 @@ on:
         default: false
         type: boolean
       ecr-pull-role-arn:
-        description: 'ARN of the AWS role the unit tests assume to pull private ECR images (ADR-1005); empty skips the ECR login'
+        description: 'ARN of the AWS role the unit tests assume to pull private ECR images; empty skips the ECR login'
         required: false
         default: ''
         type: string
