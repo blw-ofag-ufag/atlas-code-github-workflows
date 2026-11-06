@@ -227,8 +227,10 @@ custom Keycloak image), pass the ARN of a pull role:
 The test job then assumes that role via GitHub OIDC and logs in to ECR before Maven runs. Empty
 (the default) skips both steps, so other callers are unaffected.
 
-- 🔓 **Not a secret, no environment**: the ARN is passed literally in the caller. Environment
-  secrets are not available on pull requests, so the tests could not pull there otherwise.
+- 🔓 **Not a secret, no environment**: the ARN is passed literally in the caller. On pull requests
+  the callers map no environment, so environment secrets stay empty; declaring one there would let
+  every PR run assume the deployment role just to read an image. The pull role can only read, and
+  its ARN is not secret.
 - ⛓️ **No role chaining**: the pull role is assumed directly. Both are a documented exception to
   the role-chaining and per-environment-secret rules (ADR-1005); give the role read access to the
   required ECR repositories only.
