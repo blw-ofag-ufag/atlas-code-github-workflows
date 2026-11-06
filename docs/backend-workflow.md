@@ -233,8 +233,7 @@ The test job then assumes that role via GitHub OIDC and logs in to ECR before Ma
   the role-chaining and per-environment-secret rules (ADR-1005); give the role read access to the
   required ECR repositories only.
 - 🔑 **Caller permissions**: the caller must grant `id-token: write` (already needed for the
-  deployment) and `packages: read`, because a reusable workflow cannot get more than the caller
-  grants.
+  deployment), because a reusable workflow cannot get more than the caller grants.
 
 ---
 

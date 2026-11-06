@@ -15,8 +15,7 @@ on:
       ecr-pull-role-arn:
         description: >-
           ARN of an AWS role the tests assume via GitHub OIDC to pull private images from ECR (e.g. a
-          Keycloak Dev Service image). Not a secret: it is passed literally, so the login also works on
-          pull requests. Empty (default) skips the AWS and ECR login.
+          Keycloak Dev Service image). Empty (default) skips the AWS and ECR login.
         required: false
         default: ''
         type: string
