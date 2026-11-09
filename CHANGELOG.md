@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.0](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/compare/v1.7.0...v1.8.0) (2026-11-09)
+
+
+### Features
+
+* optional ECR pull role for the backend unit tests (A1A-312) ([#47](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/issues/47)) ([3da47f4](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/commit/3da47f44b288845b371b8c3f6b0afda049dd1024))
+
 ## [1.7.0](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/compare/v1.6.0...v1.7.0) (2026-10-28)
 
 
