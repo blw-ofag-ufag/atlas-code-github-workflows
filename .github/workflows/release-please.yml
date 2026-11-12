@@ -52,7 +52,7 @@ jobs:
 
       - name: Release Please
         id: rp
-        uses: googleapis/release-please-action@v4.4.1
+        uses: googleapis/release-please-action@v5.0.0
         with:
           # Use provided token if present, otherwise default to GITHUB_TOKEN
           token: ${{ steps.app-token.outputs.token }}

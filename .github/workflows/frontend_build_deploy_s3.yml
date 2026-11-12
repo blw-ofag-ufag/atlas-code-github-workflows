@@ -61,17 +61,17 @@ jobs:
           echo "${GITHUB_SHA}"
 
       - name: Checkout
-        uses: actions/checkout@v6.1.0
+        uses: actions/checkout@v7.0.1
         with:
           ref: ${{ format('v{0}', inputs.version) }}
 
       - name: Set up pnpm
-        uses: pnpm/action-setup@v5.0.0
+        uses: pnpm/action-setup@v6.1.1
 
       - name: Set up Node.js
-        uses: actions/setup-node@v6.5.0
+        uses: actions/setup-node@v7.1.0
         with:
-          node-version: 24
+          node-version: 26
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
 
