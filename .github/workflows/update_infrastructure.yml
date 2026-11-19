@@ -38,23 +38,29 @@ on:
         description: "GitHub App ID with write permissions to the infrastructure repository, used to create a token for authentication when pushing changes and creating the PR"
         required: true
         type: string
+      environment:
+        description: "GitHub environment the job runs in. Its secret DEPLOYMENT_APP_PRIVATE_KEY is used for authentication. Empty: no environment, GH_APP_PRIVATE_KEY is used."
+        required: false
+        default: ''
+        type: string
     secrets:
       GH_APP_PRIVATE_KEY:
-        required: true
-        description: 'GitHub App Private Key for authentication'
+        required: false
+        description: 'Deprecated: GitHub App Private Key, used only if the environment has no DEPLOYMENT_APP_PRIVATE_KEY secret'
 
 jobs:
   update-infrastructure:
     name: Update Infrastructure Configuration
     if: ${{ inputs.enable }}
     runs-on: ubuntu-26.04
+    environment: ${{ inputs.environment }}
 
     steps:
       - uses: actions/create-github-app-token@v3.3.0
         id: app-token
         env:
           GH_APP_ID: ${{ inputs.app-id }}
-          GH_APP_PRIVATE_KEY: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          GH_APP_PRIVATE_KEY: ${{ secrets.DEPLOYMENT_APP_PRIVATE_KEY || secrets.GH_APP_PRIVATE_KEY }}
         with:
           app-id: ${{ env.GH_APP_ID }}
           private-key: ${{ env.GH_APP_PRIVATE_KEY }}
