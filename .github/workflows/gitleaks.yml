@@ -27,7 +27,7 @@ jobs:
       contents: read
     steps:
       - name: Checkout
-        uses: actions/checkout@v6.1.0
+        uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0
           clean: true
@@ -39,7 +39,7 @@ jobs:
           private-key: ${{ secrets.GH_ORG_GITLEAKS_PRIVATE_KEY }}
 
       - name: Run Gitleaks Scan
-        uses: gitleaks/gitleaks-action@v2.3.9
+        uses: gitleaks/gitleaks-action@v3.0.0
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
           GITLEAKS_LICENSE: ${{ secrets.LICENSE_KEY_GITLEAKS }}
