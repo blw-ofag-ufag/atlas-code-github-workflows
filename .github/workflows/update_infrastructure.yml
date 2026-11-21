@@ -61,7 +61,7 @@ jobs:
           repositories: ${{ inputs.infrastructure_repo }}
 
       - name: Checkout infrastructure repository
-        uses: actions/checkout@v6.1.0
+        uses: actions/checkout@v7.0.1
         with:
           repository: "${{inputs.github-organization}}/${{ inputs.infrastructure_repo }}"
           token: ${{ steps.app-token.outputs.token }}
