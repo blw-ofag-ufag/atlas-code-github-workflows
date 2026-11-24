@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.9.0](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/compare/v1.8.0...v1.9.0) (2026-11-24)
+
+
+### Features
+
+* **backend:** read deployment secrets from the environment secrets of the repository ([d8a5f88](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/commit/d8a5f880561dde73dda219dfc271196275ca6476))
+
 ## [1.8.0](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/compare/v1.7.0...v1.8.0) (2026-11-09)
 
 
