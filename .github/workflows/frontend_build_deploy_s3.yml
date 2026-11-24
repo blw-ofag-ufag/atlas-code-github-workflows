@@ -119,10 +119,22 @@ jobs:
 
           echo "Publishing release: releases/v${VERSION}/"
 
+          # Files without a content hash in their name must be revalidated on every request, otherwise
+          # browsers and CloudFront keep serving an old version after a release. This includes the
+          # Angular service worker files: CloudFront ignores the ngsw-cache-bust query parameter, so an
+          # immutable ngsw.json hides every new release from installed PWAs.
+          UNHASHED=(index.html ngsw.json ngsw-worker.js safety-worker.js worker-basic.min.js manifest.webmanifest)
+          EXCLUDE_UNHASHED=()
+          INCLUDE_UNHASHED=()
+          for f in "${UNHASHED[@]}"; do
+            EXCLUDE_UNHASHED+=(--exclude "$f")
+            INCLUDE_UNHASHED+=(--include "$f")
+          done
+
           aws s3 sync "dist/" "s3://${FRONTEND_S3_BUCKET}/releases/v${VERSION}/" \
             --region "$AWS_REGION" \
             --delete \
-            --exclude "index.html" \
+            "${EXCLUDE_UNHASHED[@]}" \
             --exclude "assets/*" \
             --cache-control "public, max-age=31536000, immutable"
 
@@ -131,8 +143,10 @@ jobs:
             --delete \
             --cache-control "no-cache"
 
-          aws s3 cp "dist/index.html" "s3://${FRONTEND_S3_BUCKET}/releases/v${VERSION}/index.html" \
+          aws s3 sync "dist/" "s3://${FRONTEND_S3_BUCKET}/releases/v${VERSION}/" \
             --region "$AWS_REGION" \
+            --exclude "*" \
+            "${INCLUDE_UNHASHED[@]}" \
             --cache-control "no-cache"
 
       - name: Display release info
