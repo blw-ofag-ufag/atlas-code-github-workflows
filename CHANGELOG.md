@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.9.2](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/compare/v1.9.1...v1.9.2) (2026-11-25)
+
+
+### Bug Fixes
+
+* **deps:** update group-update ([deb53ec](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/commit/deb53ecb37c1c3f52a3dec604565d58aecf7c709))
+* upload unhashed frontend files such as the service worker manifest with no-cache ([339bd1c](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/commit/339bd1c49e529591ec54f6b5533968963b241bd7))
+
 ## [1.9.1](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/compare/v1.9.0...v1.9.1) (2026-11-25)
 
 
