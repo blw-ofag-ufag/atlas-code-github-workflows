@@ -32,12 +32,19 @@ The backend workflow (`backend_workflow.yml`) orchestrates the full CI/CD pipeli
 | Variable | Description |
 |---|---|
 | `INFRASTRUCTURE_REPO` | Name of the infrastructure repository (e.g. `pc-core-blw-agate-dev`) |
+| `DEPLOYMENT_APP_ID` | App ID of the GitHub App that opens the PR in the infrastructure repository |
 
 #### 🔐 Environment-specific Secrets
 
 | Secret                    | Description                                                                                                                                                                             |
 |---------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `AWS_DEPLOYMENT_ROLE_ARN` | ARN of the IAM Role for OIDC authentication (created in Terraform in the backend blueprint after setting the repository for the application, search for "*-app-builder" in IAM > Roles) |
+| `DEPLOYMENT_APP_PRIVATE_KEY` | Private key of the GitHub App from `DEPLOYMENT_APP_ID` |
+
+The caller job cannot use `environment`, so it does not see these values itself:
+
+- **Variables** are read in an environment-bound job (`resolve-env-vars` in the example) and passed on as inputs.
+- **Secrets** are passed under their own name, e.g. `DEPLOYMENT_APP_PRIVATE_KEY: ${{ secrets.DEPLOYMENT_APP_PRIVATE_KEY }}`. The value is only resolved in the environment-bound job of the shared workflow, using the name on the right-hand side. A secret the caller does not pass is empty there, even if the environment defines it.
 
 #### 🤖 Required GitHub Apps
 
@@ -47,7 +54,6 @@ The backend workflow (`backend_workflow.yml`) orchestrates the full CI/CD pipeli
 
 #### 🏢 Organization Secrets
 
-- `InfraRepo_DEPLOY_PRIVATE_KEY` (e.g. `PC_CORE_BLW_AGATE_DEV_DEPLOY_PRIVATE_KEY`)
 - `SONAR_TOKEN`
 - `NIST_OWASP_API_KEY`
 - `LICENSE_KEY_GITLEAKS`
@@ -57,7 +63,6 @@ The backend workflow (`backend_workflow.yml`) orchestrates the full CI/CD pipeli
 
 - `AWS_REGION`
 - `GH_ORG_GITLEAKS_APP_ID`
-- `InfraRepo_DEPLOY_APP_ID` (e.g. `PC_CORE_BLW_AGATE_DEV_DEPLOY_APP_ID`)
 
 ---
 

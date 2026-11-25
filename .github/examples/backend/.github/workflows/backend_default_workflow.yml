@@ -39,12 +39,15 @@ jobs:
     environment:  ${{ needs.set-env.outputs.environment }}
     outputs:
       infrastructure_repo: ${{ steps.out.outputs.infrastructure_repo }}
+      deployment_app_id: ${{ steps.out.outputs.deployment_app_id }}
     steps:
       - id: out
         run: |
           echo "resolving environment specific variables for environment ${{ needs.set-env.outputs.environment }}"
           echo "infrastructure_repo=${{ vars.INFRASTRUCTURE_REPO }}"
           echo "infrastructure_repo=${{ vars.INFRASTRUCTURE_REPO }}" >> "$GITHUB_OUTPUT"
+          echo "deployment_app_id=${{ vars.DEPLOYMENT_APP_ID }}"
+          echo "deployment_app_id=${{ vars.DEPLOYMENT_APP_ID }}" >> "$GITHUB_OUTPUT"
 
   validate-secret-values:
     runs-on: ubuntu-26.04
@@ -78,14 +81,14 @@ jobs:
       AWS_DEPLOYMENT_ROLE_ARN: ${{ secrets.AWS_DEPLOYMENT_ROLE_ARN }}
       SEMVER_PRIVATE_KEY: ${{secrets.SEMVER_PRIVATE_KEY}}
       NIST_OWASP_API_KEY: ${{ secrets.NIST_OWASP_API_KEY }}
-      DEPLOYMENT_APP_PRIVATE_KEY: ${{ secrets.PC_CORE_BLW_AGATE_DEV_DEPLOY_PRIVATE_KEY }}
+      DEPLOYMENT_APP_PRIVATE_KEY: ${{ secrets.DEPLOYMENT_APP_PRIVATE_KEY }}
     with:
       environment: ${{ needs.set-env.outputs.environment }}
       semver-app-id: ${{vars.SEMVER_APP_ID}}
       gitleaks-app-id: ${{ vars.GH_ORG_GITLEAKS_APP_ID }}
       aws-region: ${{ vars.AWS_REGION }}
       ecr-repository-name: 'agate-test-backend' # CHANGEME
-      deployment-app-id: ${{ vars.PC_CORE_BLW_AGATE_DEV_DEPLOY_APP_ID}}
+      deployment-app-id: ${{ needs.resolve-env-vars.outputs.deployment_app_id }}
       application-name: 'agate-test-backend' # CHANGEME
       infrastructure_repo: ${{ needs.resolve-env-vars.outputs.infrastructure_repo }}
       github-organization: 'blw-ofag-ufag'

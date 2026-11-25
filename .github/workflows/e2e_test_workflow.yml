@@ -5,6 +5,7 @@ permissions:
   pull-requests: write
   id-token: write
   issues: write
+  packages: read
 on:
   workflow_call:
     inputs:
@@ -104,7 +105,7 @@ on:
         description: "SonarQube authentication token"
         required: true
       DEPLOYMENT_APP_PRIVATE_KEY:
-        description: "GitHub App private key matching deployment-app-id, used for creating PRs on the infrastructure repository"
+        description: "GitHub App private key matching deployment-app-id, used for creating PRs on the infrastructure repository. Pass it under this name: the update job runs in the `environment` input, so an environment secret of this name takes precedence."
         required: true
 jobs:
   set-flags-from-commit:
@@ -231,5 +232,6 @@ jobs:
       base_branch: ${{ inputs.infrastructure_base_branch }}
       app-id: ${{ inputs.deployment-app-id }}
       github-organization: ${{ inputs.github-organization }}
+      environment: ${{ inputs.environment }}
     secrets:
-      GH_APP_PRIVATE_KEY: ${{ secrets.DEPLOYMENT_APP_PRIVATE_KEY }}
+      DEPLOYMENT_APP_PRIVATE_KEY: ${{ secrets.DEPLOYMENT_APP_PRIVATE_KEY }}
