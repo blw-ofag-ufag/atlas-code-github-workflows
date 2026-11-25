@@ -83,8 +83,8 @@ on:
         description: "OIDC role ARN for AWS credentials"
         required: true
       AWS_DEPLOYMENT_ROLE_ARN:
-        description: "Deprecated: define it as an environment secret of the `environment` input instead. Only used if no environment secret of that name exists."
-        required: false
+        description: "Deployment role ARN for AWS credentials. Pass it under this name: the build job runs in the `environment` input, so an environment secret of this name takes precedence."
+        required: true
       GH_ORG_GITLEAKS_PRIVATE_KEY:
         description: "GitHub App private key matching the gitleaks-app-id input, used for gitleaks authentication"
         required: true
@@ -98,8 +98,8 @@ on:
         description: "API Key for the national vulnerability database used by OWASP Dependency Check"
         required: true
       DEPLOYMENT_APP_PRIVATE_KEY:
-        description: "Deprecated: define it as an environment secret of the `environment` input instead. GitHub App private key matching the deployment-app-id input, used for creating PRs on the infrastructure repository"
-        required: false
+        description: "GitHub App private key matching the deployment-app-id input, used for creating PRs on the infrastructure repository. Pass it under this name: the update job runs in the `environment` input, so an environment secret of this name takes precedence."
+        required: true
 jobs:
   set-flags-from-commit:
     name: Set flags from commit message
@@ -220,7 +220,7 @@ jobs:
       github-organization: 'blw-ofag-ufag'
       environment: ${{ inputs.environment }}
     secrets:
-      GH_APP_PRIVATE_KEY: ${{ secrets.DEPLOYMENT_APP_PRIVATE_KEY }}
+      DEPLOYMENT_APP_PRIVATE_KEY: ${{ secrets.DEPLOYMENT_APP_PRIVATE_KEY }}
 
   merge-main-develop:
     name: '.'

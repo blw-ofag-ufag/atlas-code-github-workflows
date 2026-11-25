@@ -39,17 +39,17 @@ on:
         required: true
         type: string
       environment:
-        description: "GitHub environment the job runs in. Its secret DEPLOYMENT_APP_PRIVATE_KEY is used for authentication. Empty: no environment, GH_APP_PRIVATE_KEY is used."
+        description: "GitHub environment the job runs in, so that an environment secret DEPLOYMENT_APP_PRIVATE_KEY takes precedence over the passed value. Empty: no environment."
         required: false
         default: ''
         type: string
     secrets:
       DEPLOYMENT_APP_PRIVATE_KEY:
         required: false
-        description: 'Deployment GitHub App Private Key, used to authenticate to write to the infrastructure repository.'
+        description: 'Deployment GitHub App private key, used to authenticate to write to the infrastructure repository. An environment secret of this name is only used if every calling workflow passes it under this name.'
       GH_APP_PRIVATE_KEY:
         required: false
-        description: 'Deprecated: GitHub App Private Key, used only if the environment has no DEPLOYMENT_APP_PRIVATE_KEY secret'
+        description: 'Deprecated: use DEPLOYMENT_APP_PRIVATE_KEY. Only used if DEPLOYMENT_APP_PRIVATE_KEY is empty.'
 
 jobs:
   update-infrastructure:

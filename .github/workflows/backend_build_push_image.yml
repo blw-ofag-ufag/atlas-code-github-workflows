@@ -39,8 +39,8 @@ on:
         description: "OIDC role ARN for AWS credentials"
         required: true
       AWS_DEPLOYMENT_ROLE_ARN:
-        description: "Deployment role ARN for AWS credentials. Read from the environment secret of the same name; this input is only a fallback."
-        required: false
+        description: "Deployment role ARN for AWS credentials. The jobs run in the `environment` input, so an environment secret of this name takes precedence over the passed value, provided every calling workflow passes it under this name."
+        required: true
     outputs:
       image:
         value: ${{ jobs.build-push-image.outputs.image }}
