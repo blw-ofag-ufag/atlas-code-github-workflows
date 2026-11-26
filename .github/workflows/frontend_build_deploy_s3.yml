@@ -24,11 +24,6 @@ on:
         type: string
         required: true
         description: "S3 bucket name for frontend deployment"
-      build-configuration:
-        type: string
-        required: false
-        default: "dev"
-        description: "Build configuration for the frontend application, e.g. dev, prod, int, used to adjust build settings and select correct environment specific variables if needed"
     secrets:
       AWS_OIDC_ROLE_ARN:
         description: "OIDC role ARN for AWS credentials"
@@ -83,11 +78,11 @@ jobs:
       - name: pnpm install
         run: pnpm install --frozen-lockfile --ignore-scripts
 
+      # One build for every stage: the app loads its stage values at startup (see docs/frontend-workflow.md)
       - name: Build
-        # todo maybe adjust with env specific config eg: pnpm build -- --configuration=${{ steps.resolve-inputs.outputs.configuration }}
         run: pnpm build
 
-      - name: Validate deployment inputs  -- --configuration=${{ inputs.build-configuration }}
+      - name: Validate deployment inputs
         env:
           VERSION: ${{ inputs.version }}
         run: |

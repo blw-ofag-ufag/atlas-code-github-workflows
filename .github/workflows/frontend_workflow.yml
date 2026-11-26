@@ -136,7 +136,6 @@ jobs:
     with:
       enable: ${{ inputs.enable-build-push }}
       environment: ${{ inputs.environment }}
-      build-configuration: ${{ github.ref == 'refs/heads/develop' && 'dev' || 'int' }}
       version: ${{needs.semantic-release.outputs.version }}
       aws-region: ${{ inputs.aws-region }}
       frontend-s3-bucket: ${{ inputs.frontend-s3-bucket }}

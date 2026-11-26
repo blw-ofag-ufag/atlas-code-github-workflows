@@ -5,6 +5,8 @@ The frontend workflow (`frontend_workflow.yml`) orchestrates the full CI/CD pipe
 > [!NOTE]
 > Releases are published to an immutable `releases/v<version>/` path in the S3 bucket — the workflow no longer writes to the bucket root or invalidates a CloudFront cache. The release only goes live once the generated infrastructure PR (which updates `<application-name>_version` in `terraform.auto.tfvars.json`) is reviewed and merged, which re-applies Terraform with the new `origin_path`.
 >
+> The build is the same for every stage, so a release tested on int can be promoted to prod without a rebuild. Stage values (API URL, OIDC issuer, …) must therefore not be built in: the app loads them at startup from `runtime-config.json` (`@blw-ofag-ufag/atlas-ui/runtime-config`), which the infrastructure serves per stage (`runtime_config` of the cache behavior in the frontend blueprint).
+>
 > Hashed build files are uploaded with `Cache-Control: public, max-age=31536000, immutable`. Files without a hash in their name (`index.html`, `manifest.webmanifest` and the Angular service worker files `ngsw.json`, `ngsw-worker.js`, `safety-worker.js`, `worker-basic.min.js`) and everything under `assets/` are uploaded with `Cache-Control: no-cache`, so a new release is picked up without a CloudFront invalidation.
 
 ## 🛠️ Setup
