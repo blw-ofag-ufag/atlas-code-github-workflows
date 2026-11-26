@@ -51,7 +51,7 @@ These are the entry points that chain all individual workflows together.
 | Workflow | Description |
 |---|---|
 | [`backend_build_push_image.yml`](../.github/workflows/backend_build_push_image.yml) | 🐳 Builds the Java backend with Maven, packages it into a multi-platform Docker image (amd64 + arm64), and pushes it to AWS ECR |
-| [`frontend_build_deploy_s3.yml`](../.github/workflows/frontend_build_deploy_s3.yml) | ☁️ Builds the Node frontend with pnpm and deploys it to an S3 bucket, then invalidates the CloudFront cache |
+| [`frontend_build_deploy_s3.yml`](../.github/workflows/frontend_build_deploy_s3.yml) | ☁️ Builds the Node frontend with pnpm and publishes it as an immutable release (`releases/v<version>/`) to an S3 bucket |
 | [`update_infrastructure.yml`](../.github/workflows/update_infrastructure.yml) | 🔧 Updates `terraform.auto.tfvars.json` with the new Docker image tag in a separate infrastructure repository and opens a PR for review |
 
 ---
