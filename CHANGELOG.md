@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.9.3](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/compare/v1.9.2...v1.9.3) (2026-11-26)
+
+
+### Bug Fixes
+
+* **frontend:** resolve the deployment app key from the environment ([#56](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/issues/56)) ([1a2d4b2](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/commit/1a2d4b2db2426fd0835fae773df02839831f242b))
+
 ## [1.9.2](https://github.com/blw-ofag-ufag/atlas-code-github-workflows/compare/v1.9.1...v1.9.2) (2026-11-25)
 
 
