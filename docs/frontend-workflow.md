@@ -55,6 +55,11 @@ The frontend workflow (`frontend_workflow.yml`) orchestrates the full CI/CD pipe
 | `AWS_OIDC_ROLE_ARN` | `arn:aws:iam::xxxxx:role/agate-frontend-github-oidc-role` | ARN of the IAM Role for OIDC authentication (created in Terraform) |
 | `DEPLOYMENT_APP_PRIVATE_KEY` | — | Private key of the infrastructure-update GitHub App (matching `DEPLOYMENT_APP_ID`) |
 
+The caller job cannot use `environment`, so it does not see these values itself:
+
+- **Variables** are read in an environment-bound job (`resolve-env-vars` in the example) and passed on as inputs.
+- **Secrets** are passed under their own name, e.g. `DEPLOYMENT_APP_PRIVATE_KEY: ${{ secrets.DEPLOYMENT_APP_PRIVATE_KEY }}`. The value is only resolved in the environment-bound job of the shared workflow, using the name on the right-hand side. A secret the caller does not pass is empty there, even if the environment defines it.
+
 > [!NOTE]
 > `CLOUDFRONT_DISTRIBUTION_ID` is no longer used — the workflow stopped invalidating CloudFront caches in favor of the versioned-release + infra-PR flow. Remove it from existing environments.
 
@@ -71,10 +76,10 @@ In addition to the variables/secrets above, the calling workflow must pass these
 
 | Input | Example | Description |
 |---|---|---|
-| `deployment-app-id` | `${{ vars.DEPLOYMENT_APP_ID }}` | App ID of the infrastructure deployment GitHub App |
+| `deployment-app-id` | `${{ needs.resolve-env-vars.outputs.deployment_app_id }}` | App ID of the infrastructure deployment GitHub App |
 | `application-name` | `agate_frontend` | Must match the `<application-name>_version` variable already present in the infrastructure repository's `terraform.auto.tfvars.json` |
 | `github-organization` | `blw-ofag-ufag` | Organization that owns the infrastructure repository |
-| `infrastructure_repo` | `${{ vars.INFRASTRUCTURE_REPO }}` | Name of the infrastructure repository |
+| `infrastructure_repo` | `${{ needs.resolve-env-vars.outputs.infrastructure_repo }}` | Name of the infrastructure repository |
 | `infrastructure_base_branch` | `main` | Base branch for the generated infrastructure PR (optional, defaults to `main`) |
 
 #### 🏢 Organization Secrets

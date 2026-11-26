@@ -39,7 +39,7 @@ jobs:
     outputs:
       frontend_s3_bucket: ${{ steps.out.outputs.frontend_s3_bucket }}
       infrastructure_repo: ${{ steps.out.outputs.infrastructure_repo }}
-      aws_region: ${{ steps.out.outputs.aws_region }}
+      deployment_app_id: ${{ steps.out.outputs.deployment_app_id }}
     steps:
       - id: out
         run: |
@@ -48,6 +48,8 @@ jobs:
           echo "frontend_s3_bucket=${{ vars.FRONTEND_S3_BUCKET }}" >> "$GITHUB_OUTPUT"
           echo "infrastructure_repo=${{ vars.INFRASTRUCTURE_REPO }}"
           echo "infrastructure_repo=${{ vars.INFRASTRUCTURE_REPO }}" >> "$GITHUB_OUTPUT"
+          echo "deployment_app_id=${{ vars.DEPLOYMENT_APP_ID }}"
+          echo "deployment_app_id=${{ vars.DEPLOYMENT_APP_ID }}" >> "$GITHUB_OUTPUT"
 
   frontend-workflow:
     name: "."
@@ -63,11 +65,11 @@ jobs:
       DEPLOYMENT_APP_PRIVATE_KEY: ${{ secrets.DEPLOYMENT_APP_PRIVATE_KEY }}
     with:
       environment: ${{ needs.set-env.outputs.environment }}
-      app-id: ${{ vars.GH_ORG_APP_ID }}
+      app-id: ${{ vars.SEMVER_APP_ID }}
       gitleaks-app-id: ${{ vars.GH_ORG_GITLEAKS_APP_ID }}
       aws-region: ${{ vars.AWS_REGION }}
       frontend-s3-bucket: ${{ needs.resolve-env-vars.outputs.frontend_s3_bucket }}
-      deployment-app-id: ${{ vars.DEPLOYMENT_APP_ID }}
+      deployment-app-id: ${{ needs.resolve-env-vars.outputs.deployment_app_id }}
       application-name: agate_frontend
       github-organization: blw-ofag-ufag
       infrastructure_repo: ${{ needs.resolve-env-vars.outputs.infrastructure_repo }}
